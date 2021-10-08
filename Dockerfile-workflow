@@ -1,0 +1,43 @@
+FROM toposoid/scala-nlp:2.12.12-0.1.0
+
+WORKDIR /app
+
+ENV DEPLOYMENT=local
+ENV _JAVA_OPTIONS="-Xms2g -Xmx4g"
+
+RUN apt-get update \
+&& apt-get -y install git \
+&& git clone https://github.com/toposoid/scala-common.git \
+&& cd scala-common \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/scala-common-nlp.git \
+&& cp /tmp/wnjpn.db /app/scala-common-nlp/src/main/resources/ \
+&& cp /tmp/entity_vector.model.bin /app/scala-common-nlp/src/main/resources/ \
+&& cd scala-common-nlp \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/scala-data-accessor-neo4j.git \
+&& cd scala-data-accessor-neo4j \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/toposoid-common.git \
+&& cd toposoid-common \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/toposoid-knowledgebase-model.git \
+&& cd toposoid-knowledgebase-model \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/scala-juman-knp.git \
+&& cd scala-juman-knp \
+&& git checkout scala-2.12-support \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/toposoid-sentence-parser.git \
+&& cd toposoid-sentence-parser \
+&& sbt publishLocal \
+&& cd .. \
+&& git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git
+
+

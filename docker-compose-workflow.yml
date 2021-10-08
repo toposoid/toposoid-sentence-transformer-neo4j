@@ -1,0 +1,27 @@
+version: '3'
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/24
+services:
+  toposoid-sentence-transformer-neo4j:
+    image: toposoid-sentence-transformer-neo4j:0.1.0
+    tty: true
+    environment:
+      - GRAPHDB_HOST=172.30.0.2
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.3
+  neo4j:
+    image: neo4j:4.1.3
+    environment:
+      - NEO4J_AUTH=neo4j/p@ssw0rd
+    ports:
+      - 7474:7474
+      - 7687:7687
+    networks:
+      app_net:
+        ipv4_address: 172.30.0.2
