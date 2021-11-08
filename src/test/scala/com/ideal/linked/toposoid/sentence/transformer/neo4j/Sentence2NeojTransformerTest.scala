@@ -75,6 +75,17 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     assert(result2.hasNext)
   }
 
+  "The short sentence with json" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(Knowledge("セリヌンティウスである。", """{"id":"Test"}"""), Knowledge("セリヌンティウス","""{"id":"Test2"}"""), Knowledge("","""{"id":"Test3"}"""))
+    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
+    assert(result.hasNext)
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test2\"}' return x")
+    assert(result2.hasNext)
+    val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
+    assert(!result3.hasNext)
+  }
+
 
 }
 

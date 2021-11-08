@@ -42,14 +42,14 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param sentences
    */
   def createGraphAuto(knowledgeList:List[Knowledge]): Unit ={
-    for(s <-knowledgeList){
+    for(s <-knowledgeList.filter(_.sentence.size != 0)){
       insertScript.clear()
       val o = SentenceParser.parse(s.sentence)
       o._1.map(x => createQueryForNode(x._2, x._2.nodeType, s.json))
-      Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
       insertScript.clear()
       o._2.map(createQueryForEdgeForAuto(o._1, _))
-      Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     }
   }
 
