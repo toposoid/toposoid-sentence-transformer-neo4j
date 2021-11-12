@@ -1,7 +1,7 @@
 FROM toposoid/scala-nlp:2.12.12-0.1.0
 
 WORKDIR /app
-
+ARG TARGET_BRANCH
 ENV DEPLOYMENT=local
 ENV _JAVA_OPTIONS="-Xms2g -Xmx4g"
 
@@ -41,6 +41,5 @@ RUN apt-get update \
 && git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git \
 && cd toposoid-sentence-transformer-neo4j \
 && git checkout -b ${TARGET_BRANCH} origin/${TARGET_BRANCH}
-#&& git checkout ${TARGET_BRANCH}
-
+#&& git checkout ${TARGET_BRANCH} \
 
