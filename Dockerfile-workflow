@@ -38,7 +38,7 @@ RUN apt-get update \
 && cd toposoid-sentence-parser-japanese \
 && sbt publishLocal \
 && cd .. \
-&& git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git
+&& git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git \
 && cd toposoid-sentence-transformer-neo4j \
 && git checkout -b ${TARGET_BRANCH} origin/${TARGET_BRANCH}
 #&& git checkout ${TARGET_BRANCH}
