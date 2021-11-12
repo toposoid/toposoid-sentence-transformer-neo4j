@@ -1,7 +1,7 @@
 FROM toposoid/scala-nlp:2.12.12-0.1.0
 
 WORKDIR /app
-
+ARG TARGET_BRANCH
 ENV DEPLOYMENT=local
 ENV _JAVA_OPTIONS="-Xms2g -Xmx4g"
 
@@ -11,10 +11,10 @@ RUN apt-get update \
 && cd scala-common \
 && sbt publishLocal \
 && cd .. \
-&& git clone https://github.com/toposoid/scala-common-nlp.git \
-&& cp /tmp/wnjpn.db /app/scala-common-nlp/src/main/resources/ \
-&& cp /tmp/entity_vector.model.bin /app/scala-common-nlp/src/main/resources/ \
-&& cd scala-common-nlp \
+&& git clone https://github.com/toposoid/scala-common-nlp-japanese.git \
+&& cp /tmp/wnjpn.db /app/scala-common-nlp-japanese/src/main/resources/ \
+&& cp /tmp/entity_vector.model.bin /app/scala-common-nlp-japanese/src/main/resources/ \
+&& cd scala-common-nlp-japanese \
 && sbt publishLocal \
 && cd .. \
 && git clone https://github.com/toposoid/scala-data-accessor-neo4j.git \
@@ -34,10 +34,12 @@ RUN apt-get update \
 && git checkout scala-2.12-support \
 && sbt publishLocal \
 && cd .. \
-&& git clone https://github.com/toposoid/toposoid-sentence-parser.git \
-&& cd toposoid-sentence-parser \
+&& git clone https://github.com/toposoid/toposoid-sentence-parser-japanese.git \
+&& cd toposoid-sentence-parser-japanese \
 && sbt publishLocal \
 && cd .. \
-&& git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git
-
+&& git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git \
+&& cd toposoid-sentence-transformer-neo4j \
+&& git checkout -b ${TARGET_BRANCH} origin/${TARGET_BRANCH}
+#&& git checkout ${TARGET_BRANCH} \
 
