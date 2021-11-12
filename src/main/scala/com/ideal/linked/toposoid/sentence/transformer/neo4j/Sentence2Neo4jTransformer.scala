@@ -16,14 +16,14 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.common.nlp.word2vec.Word2VecAccessor
-import com.ideal.linked.common.nlp.wordnet.WordNetAccessor
+import com.ideal.linked.common.nlp.japanese.word2vec.Word2VecAccessor
+import com.ideal.linked.common.nlp.japanese.wordnet.WordNetAccessor
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
-import com.ideal.linked.toposoid.sentence.parser.SentenceParser
+import com.ideal.linked.toposoid.sentence.parser.japanese.SentenceParser
 import play.api.libs.json.{JsValue, Json, __}
 
 import scala.collection.immutable.Set
