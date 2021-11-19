@@ -16,6 +16,7 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
+import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.common.nlp.japanese.word2vec.Word2VecAccessor
 import com.ideal.linked.common.nlp.japanese.wordnet.WordNetAccessor
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
@@ -23,7 +24,7 @@ import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
-import com.ideal.linked.toposoid.sentence.parser.japanese.SentenceParser
+import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
 import play.api.libs.json.{JsValue, Json, __}
 
 import scala.collection.immutable.Set
@@ -44,11 +45,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   def createGraphAuto(knowledgeList:List[Knowledge]): Unit ={
     for(s <-knowledgeList.filter(_.sentence.size != 0)){
       insertScript.clear()
-      val o = SentenceParser.parse(s.sentence)
-      o._1.map(x => createQueryForNode(x._2, x._2.nodeType, s.json))
+      val json:String = Json.toJson(s).toString()
+      val parseResult:String = ToposoidUtils.callComponent(json,conf.getString("SENTENCE_PARSER_WEB_HOST"), "9001", "analyzeOneSentence")
+      val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+      analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, s.json))
       if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
       insertScript.clear()
-      o._2.map(createQueryForEdgeForAuto(o._1, _))
+      analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _))
       if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     }
   }
@@ -86,6 +89,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.logicType,
       json)
     )
+    //TODO:scala-common-nlp-webを追加
     val synonyms: Set[String] = WordNetAccessor.getSynonyms(node.normalizedName)
     if (synonyms.size > 0) synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
 
@@ -100,7 +104,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   private def createQueryForSynonymNode(node:KnowledgeBaseNode, synonym:String, sentenceType:Int): Unit = {
 
     val nodeType:String = ToposoidUtils.getNodeType(sentenceType)
-
+    //TODO:scala-common-nlp-webを追加
     if(Word2VecAccessor.calcSimilarityByWord2Vec(node.normalizedName , synonym)){
       insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym,  node.propositionId))
       insertScript.append("|UNION ALL\n")
