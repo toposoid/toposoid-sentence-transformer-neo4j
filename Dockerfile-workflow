@@ -39,6 +39,12 @@ RUN apt-get update \
 && git checkout ${TARGET_BRANCH} \
 && sbt publishLocal \
 && cd .. \
+&& git clone https://github.com/toposoid/toposoid-deduction-protocol-model.git \
+&& cd toposoid-deduction-protocol-model \
+&& git fetch origin ${TARGET_BRANCH} \
+&& git checkout ${TARGET_BRANCH} \
+&& sbt publishLocal \
+&& cd .. \
 && git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git \
 && cd toposoid-sentence-transformer-neo4j \
 && git fetch origin ${TARGET_BRANCH} \
