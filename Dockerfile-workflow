@@ -39,17 +39,6 @@ RUN apt-get update \
 && git checkout ${TARGET_BRANCH} \
 && sbt publishLocal \
 && cd .. \
-&& git clone https://github.com/toposoid/scala-juman-knp.git \
-&& cd scala-juman-knp \
-&& git checkout scala-2.12-support \
-&& sbt publishLocal \
-&& cd .. \
-&& git clone https://github.com/toposoid/toposoid-sentence-parser-japanese.git \
-&& cd toposoid-sentence-parser-japanese \
-&& git fetch origin ${TARGET_BRANCH} \
-&& git checkout ${TARGET_BRANCH} \
-&& sbt publishLocal \
-&& cd .. \
 && git clone https://github.com/toposoid/toposoid-sentence-transformer-neo4j.git \
 && cd toposoid-sentence-transformer-neo4j \
 && git fetch origin ${TARGET_BRANCH} \

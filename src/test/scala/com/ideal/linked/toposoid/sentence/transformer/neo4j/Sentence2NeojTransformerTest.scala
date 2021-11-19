@@ -18,16 +18,16 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
-import org.neo4j.driver.{Record, Result}
+import org.neo4j.driver.Result
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, FlatSpec}
 
 class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
 
-  def before(): Unit = {
+  before {
     Neo4JAccessor.delete()
   }
 
-  def after():Unit = {
+  after {
     Neo4JAccessor.delete()
   }
 
@@ -85,7 +85,6 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
     assert(!result3.hasNext)
   }
-
 
 }
 
