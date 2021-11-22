@@ -8,7 +8,7 @@ networks:
         - subnet: 172.30.0.0/24
 services:
   toposoid-sentence-transformer-neo4j:
-    image: toposoid-sentence-transformer-neo4j:0.1.1
+    image: toposoid-sentence-transformer-neo4j:0.1-SNAPSHOT
     tty: true
     environment:
       - GRAPHDB_HOST=172.30.0.2

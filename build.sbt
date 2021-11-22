@@ -1,7 +1,7 @@
 import Dependencies._
 
 ThisBuild / scalaVersion     := "2.12.12"
-ThisBuild / version          := "0.1.1"
+ThisBuild / version          := "0.1-SNAPSHOT"
 ThisBuild / organization     := "com.ideal.linked"
 
 lazy val root = (project in file("."))
@@ -12,8 +12,8 @@ lazy val root = (project in file("."))
     libraryDependencies += "com.ideal.linked" %% "scala-common-nlp-japanese" % "0.1.0",
     libraryDependencies += "com.ideal.linked" %% "scala-data-accessor-neo4j" % "0.1.0",
     libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.1.1",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.1.0",
+    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.1-SNAPSHOT",
+    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.1-SNAPSHOT",
     libraryDependencies += "de.sciss" % "ws4j" % "0.1.0",
     libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
     libraryDependencies += "com.typesafe.play" %% "play-json" % "2.9.2"
