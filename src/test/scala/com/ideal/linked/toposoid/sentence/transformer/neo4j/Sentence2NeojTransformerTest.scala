@@ -23,6 +23,10 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, F
 
 class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
 
+  before {
+    Neo4JAccessor.delete()
+  }
+
   override def beforeAll(): Unit = {
     Neo4JAccessor.delete()
   }
