@@ -27,10 +27,6 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     Neo4JAccessor.delete()
   }
 
-  after {
-    Neo4JAccessor.delete()
-  }
-
   override def beforeAll(): Unit = {
     Neo4JAccessor.delete()
   }
