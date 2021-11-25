@@ -21,7 +21,7 @@ import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
-import com.ideal.linked.toposoid.knowledgebase.nlp.model.SynonymList
+import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
 import play.api.libs.json.{JsValue, Json, __}
@@ -88,8 +88,9 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.logicType,
       json)
     )
-    val synonymList:SynonymList = Json.parse(ToposoidUtils.callComponent(json,conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")).as[SynonymList]
-    if (synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
+    val normalizedWord = NormalizedWord(node.normalizedName)
+    val synonymList:SynonymList = Json.parse(ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(),conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")).as[SynonymList]
+    if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
   }
 
   /**
