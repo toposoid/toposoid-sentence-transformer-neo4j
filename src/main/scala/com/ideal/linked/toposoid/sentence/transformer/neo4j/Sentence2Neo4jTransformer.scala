@@ -17,12 +17,11 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.common.nlp.japanese.word2vec.Word2VecAccessor
-import com.ideal.linked.common.nlp.japanese.wordnet.WordNetAccessor
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
+import com.ideal.linked.toposoid.knowledgebase.nlp.model.SynonymList
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
 import play.api.libs.json.{JsValue, Json, __}
@@ -89,10 +88,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.logicType,
       json)
     )
-    //TODO:scala-common-nlp-webを追加
-    val synonyms: Set[String] = WordNetAccessor.getSynonyms(node.normalizedName)
-    if (synonyms.size > 0) synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
-
+    val synonymList:SynonymList = Json.parse(ToposoidUtils.callComponent(json,conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")).as[SynonymList]
+    if (synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
   }
 
   /**
@@ -102,15 +99,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param sentenceType
    */
   private def createQueryForSynonymNode(node:KnowledgeBaseNode, synonym:String, sentenceType:Int): Unit = {
-
     val nodeType:String = ToposoidUtils.getNodeType(sentenceType)
-    //TODO:scala-common-nlp-webを追加
-    if(Word2VecAccessor.calcSimilarityByWord2Vec(node.normalizedName , synonym)){
-      insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym,  node.propositionId))
-      insertScript.append("|UNION ALL\n")
-      insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
-      insertScript.append("|UNION ALL\n")
-    }
+    insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym,  node.propositionId))
+    insertScript.append("|UNION ALL\n")
+    insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
+    insertScript.append("|UNION ALL\n")
   }
 
   /**
