@@ -98,6 +98,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
           val synonymList: SynonymList = Json.parse(result).as[SynonymList]
           if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
           break
+        }else{
+          logger.error(i.toString +  " callComponent Error")
         }
         if(i ==2) Json.parse(result).as[SynonymList]
       }
