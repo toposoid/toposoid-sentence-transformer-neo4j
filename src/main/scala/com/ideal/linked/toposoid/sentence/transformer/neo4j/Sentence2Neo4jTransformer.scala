@@ -24,9 +24,11 @@ import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, Knowled
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
-import play.api.libs.json.{JsValue, Json, __}
+import play.api.libs.json.JsResult.Exception
+import play.api.libs.json.{JsError, JsValue, Json, __}
 
 import scala.collection.immutable.Set
+import scala.util.control.Breaks.{break, breakable}
 
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.
@@ -62,7 +64,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    */
   private def createQueryForNode(node:KnowledgeBaseNode,sentenceType:Int, json:String): Unit = {
 
-    val nodeType:String = ToposoidUtils.getNodeType(sentenceType)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
 
     insertScript.append("|MERGE (:%s {nodeName: '%s', nodeId:'%s', propositionId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:'%s', normalizedName:'%s', dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', isDenial:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',extentText:'%s' })\n".format(
       nodeType,
@@ -89,10 +91,18 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       json)
     )
     val normalizedWord = NormalizedWord(node.normalizedName)
-    val synonymList:SynonymList = Json.parse(ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(),conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")).as[SynonymList]
-    if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
+    breakable {
+      for (i <- 0 to 2) {
+        val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")
+        if (result != """"{"records":[]}"""") {
+          val synonymList: SynonymList = Json.parse(result).as[SynonymList]
+          if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
+          break
+        }
+        if(i ==2) Json.parse(result).as[SynonymList]
+      }
+    }
   }
-
   /**
    * This function outputs a query for synony　nodes and edges.
    * @param node
