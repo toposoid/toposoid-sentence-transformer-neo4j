@@ -47,23 +47,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     for(s <-knowledgeList.filter(_.sentence.size != 0)){
       insertScript.clear()
       val json:String = Json.toJson(s).toString()
-      breakable {
-        for (i <- 0 to 2) {
-          val parseResult: String = ToposoidUtils.callComponent(json, conf.getString("SENTENCE_PARSER_WEB_HOST"), "9001", "analyzeOneSentence")
-          if (parseResult != """"{"records":[]}"""") {
-            val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-            analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, s.json))
-            if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-            insertScript.clear()
-            analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _))
-            if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-            break
-          }else{
-            logger.error(i.toString +  " callComponent Error")
-          }
-          if(i ==2) Json.parse(parseResult).as[SynonymList]
-        }
-      }
+      val parseResult: String = ToposoidUtils.callComponent(json, conf.getString("SENTENCE_PARSER_WEB_HOST"), "9001", "analyzeOneSentence")
+      val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+      analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, s.json))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      insertScript.clear()
+      analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     }
   }
 
@@ -100,20 +90,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.logicType,
       json)
     )
+    logger.info("check")
     val normalizedWord = NormalizedWord(node.normalizedName)
-    breakable {
-      for (i <- 0 to 2) {
-        val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")
-        if (result != """"{"records":[]}"""") {
-          val synonymList: SynonymList = Json.parse(result).as[SynonymList]
-          if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
-          break
-        }else{
-          logger.error(i.toString +  " callComponent Error")
-        }
-        if(i ==2) Json.parse(result).as[SynonymList]
-      }
-    }
+    val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")
+    val synonymList: SynonymList = Json.parse(result).as[SynonymList]
+    if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
   }
   /**
    * This function outputs a query for synony　nodes and edges.
