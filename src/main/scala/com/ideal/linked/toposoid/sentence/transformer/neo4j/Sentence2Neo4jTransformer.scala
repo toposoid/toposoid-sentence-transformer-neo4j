@@ -24,11 +24,7 @@ import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, Knowled
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
-import play.api.libs.json.JsResult.Exception
-import play.api.libs.json.{JsError, JsValue, Json, __}
-
-import scala.collection.immutable.Set
-import scala.util.control.Breaks.{break, breakable}
+import play.api.libs.json.{JsValue, Json}
 
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.
@@ -90,7 +86,6 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.logicType,
       json)
     )
-    logger.info("check")
     val normalizedWord = NormalizedWord(node.normalizedName)
     val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), conf.getString("COMMON_NLP_WEB_HOST"), "9006", "getSynonyms")
     val synonymList: SynonymList = Json.parse(result).as[SynonymList]
