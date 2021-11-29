@@ -17,8 +17,8 @@ services:
     networks:
       app_net:
         ipv4_address: 172.30.0.3
-  toposoid-sentence-parser-web:
-    image: toposoid/toposoid-sentence-parser-web:0.1-SNAPSHOT
+  toposoid-sentence-parser-japanese-web:
+    image: toposoid/toposoid-sentence-parser-japanese-web:0.1-SNAPSHOT
     tty: true
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.4
