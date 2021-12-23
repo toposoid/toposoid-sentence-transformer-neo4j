@@ -3,7 +3,7 @@ FROM toposoid/scala-nlp:2.12.12-0.1.0
 WORKDIR /app
 ARG TARGET_BRANCH
 ENV DEPLOYMENT=local
-ENV _JAVA_OPTIONS="-Xms512g -Xmx1g"
+ENV _JAVA_OPTIONS="-Xms512m -Xmx1g"
 
 RUN apt-get update \
 && apt-get -y install git \
