@@ -55,7 +55,7 @@ services:
     ports:
       - 9007:9007
   toposoid-common-nlp-english-web:
-    image: toposoid/scala-common-nlp-english-web:0.1-SNAPSHOT
+    image: toposoid/toposoid-common-nlp-english-web:0.1-SNAPSHOT
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.7
       - SYNONYM_NOUN_SIMILARITY_THRESHHOLD_EN=0.52
