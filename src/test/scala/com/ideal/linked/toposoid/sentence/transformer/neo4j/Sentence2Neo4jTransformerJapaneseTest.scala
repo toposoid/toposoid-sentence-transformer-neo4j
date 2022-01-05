@@ -21,7 +21,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
 import org.neo4j.driver.Result
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, FlatSpec}
 
-class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
+class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
 
   before {
     Neo4JAccessor.delete()
@@ -81,55 +81,6 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
     assert(!result3.hasNext)
   }
-
-  "The list of english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life.", "en_US", "{}"), Knowledge("Seeing is believing.", "en_US" ,"{}"))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:ClaimEdge]->(:ClaimNode{surface:\"\'s\"})<-[:ClaimEdge]-(:ClaimNode{surface:'life'}) RETURN x")
-    assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'Seeing'})-[:ClaimEdge]->(:ClaimNode{surface:'believing'})<-[:ClaimEdge]-(:ClaimNode{surface:'is'}) RETURN x")
-    assert(result2.hasNext)
-    val result3:Result = Neo4JAccessor.executeQueryAndReturn("MAtCH x = (:SynonymNode{nodeName:'living'})-[:SynonymEdge]->(:ClaimNode{surface:'life'}) return x")
-    assert(result3.hasNext)
-  }
-
-  "The list of multiple english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life. Seeing is believing.", "en_US", "{}"))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:ClaimEdge]->(:ClaimNode{surface:\"\'s\"})<-[:ClaimEdge]-(:ClaimNode{surface:'life'}) RETURN x")
-    assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'Seeing'})-[:ClaimEdge]->(:ClaimNode{surface:'believing'})<-[:ClaimEdge]-(:ClaimNode{surface:'is'}) RETURN x")
-    assert(result2.hasNext)
-  }
-
-  "The List of english sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val sentenceList = List(Knowledge("If you can dream it, you can do it.", "en_US", "{}"))
-    Sentence2Neo4jTransformer.createGraphAuto(sentenceList)
-    val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode)-[*..]->(:PremiseNode{surface:'dream'})-[:LogicEdge]->(:ClaimNode{surface:'do'})<-[*..]-(:ClaimNode) RETURN x")
-    assert(result.hasNext)
-  }
-
-  "The list of english sentences with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life.", "en_US", """{"id":"Test"}"""), Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}"""))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
-    assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText=~'.*\"dummy\".*' return x")
-    assert(result2.hasNext)
-  }
-
-  "The short english sentence with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("naature", "en_US", """{"id":"Test"}"""), Knowledge("naature", "en_US","""{"id":"Test2"}"""), Knowledge("", "en_US","""{"id":"Test3"}"""))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
-    assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test2\"}' return x")
-    assert(result2.hasNext)
-    val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
-    assert(!result3.hasNext)
-  }
-
-
 
 }
 
