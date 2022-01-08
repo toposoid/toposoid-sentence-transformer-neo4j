@@ -18,16 +18,12 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
-import org.neo4j.driver.{Record, Result}
+import org.neo4j.driver.Result
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, FlatSpec}
 
-class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
+class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
 
-  def before(): Unit = {
-    Neo4JAccessor.delete()
-  }
-
-  def after():Unit = {
+  before {
     Neo4JAccessor.delete()
   }
 
@@ -39,8 +35,8 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     Neo4JAccessor.delete()
   }
 
-  "The list of sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("太郎は映画を見た。", "{}"), Knowledge("花子の趣味はガーデニングです。","{}"))
+  "The list of japanese sentences" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}"), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}"))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'太郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
@@ -50,8 +46,8 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     assert(result3.hasNext)
   }
 
-  "The list of multiple sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "{}"))
+  "The list of multiple japanese sentences" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "ja_JP", "{}"))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'二郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
@@ -59,15 +55,15 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     assert(result2.hasNext)
   }
 
-  "The List of sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val sentenceList = List(Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "{}"))
+  "The List of japanese sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
+    val sentenceList = List(Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}"))
     Sentence2Neo4jTransformer.createGraphAuto(sentenceList)
     val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'明日が'})-[:PremiseEdge]->(:PremiseNode{surface:'雨ならば、'})-[:LogicEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
   }
 
-  "The list of sentences with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("三郎は映画を見た。", """{"id":"Test"}"""), Knowledge("明美の趣味はガーデニングです。","""{"日本語":"大丈夫かテスト"}"""))
+  "The list of japanese sentences with json" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(Knowledge("三郎は映画を見た。", "ja_JP", """{"id":"Test"}"""), Knowledge("明美の趣味はガーデニングです。", "ja_JP", """{"日本語":"大丈夫かテスト"}"""))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -75,8 +71,8 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     assert(result2.hasNext)
   }
 
-  "The short sentence with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("セリヌンティウスである。", """{"id":"Test"}"""), Knowledge("セリヌンティウス","""{"id":"Test2"}"""), Knowledge("","""{"id":"Test3"}"""))
+  "The short japanese sentence with json" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(Knowledge("セリヌンティウスである。", "ja_JP", """{"id":"Test"}"""), Knowledge("セリヌンティウス", "ja_JP","""{"id":"Test2"}"""), Knowledge("", "ja_JP","""{"id":"Test3"}"""))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -85,7 +81,6 @@ class Sentence2NeojTransformerTest extends FlatSpec with DiagrammedAssertions wi
     val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
     assert(!result3.hasNext)
   }
-
 
 }
 

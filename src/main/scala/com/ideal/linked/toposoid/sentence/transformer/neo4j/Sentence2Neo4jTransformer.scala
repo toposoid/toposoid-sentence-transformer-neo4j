@@ -16,17 +16,18 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.common.nlp.japanese.word2vec.Word2VecAccessor
-import com.ideal.linked.common.nlp.japanese.wordnet.WordNetAccessor
+import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
+import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
-import com.ideal.linked.toposoid.sentence.parser.japanese.SentenceParser
-import play.api.libs.json.{JsValue, Json, __}
+import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
+import play.api.libs.json.{JsValue, Json}
 
-import scala.collection.immutable.Set
+import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
 
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.
@@ -36,21 +37,33 @@ object Sentence2Neo4jTransformer extends LazyLogging{
 
   val insertScript = new StringBuilder
   val re = "UNION ALL\n$".r
+  val langPatternJP: Regex = "^ja_.*".r
+  val langPatternEN: Regex = "^en_.*".r
 
   /**
    * Main function of this module　
    * @param sentences
    */
-  def createGraphAuto(knowledgeList:List[Knowledge]): Unit ={
+  def createGraphAuto(knowledgeList:List[Knowledge]): Unit = Try {
     for(s <-knowledgeList.filter(_.sentence.size != 0)){
       insertScript.clear()
-      val o = SentenceParser.parse(s.sentence)
-      o._1.map(x => createQueryForNode(x._2, x._2.nodeType, s.json))
+      val json:String = Json.toJson(s).toString()
+      val parserInfo:(String, String) = s.lang match {
+        case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+        case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+        case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+      }
+      val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
+      val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+      analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, s.lang, s.extentInfoJson))
       if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
       insertScript.clear()
-      o._2.map(createQueryForEdgeForAuto(o._1, _))
+      analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, s.lang))
       if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     }
+  }match {
+    case Success(s) => s
+    case Failure(e) => throw e
   }
 
   /**
@@ -58,11 +71,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node:KnowledgeBaseNode,sentenceType:Int, json:String): Unit = {
+  private def createQueryForNode(node:KnowledgeBaseNode,sentenceType:Int, lang:String, json:String): Unit = {
 
-    val nodeType:String = ToposoidUtils.getNodeType(sentenceType)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
 
-    insertScript.append("|MERGE (:%s {nodeName: '%s', nodeId:'%s', propositionId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:'%s', normalizedName:'%s', dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', isDenial:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',extentText:'%s' })\n".format(
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', isDenial:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',lang:'%s', extentText:'%s' })\n".format(
       nodeType,
       node.normalizedName,
       node.nodeId,
@@ -84,13 +97,21 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.surfaceYomi,
       node.modalityType,
       node.logicType,
+      lang,
       json)
     )
-    val synonyms: Set[String] = WordNetAccessor.getSynonyms(node.normalizedName)
-    if (synonyms.size > 0) synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
+    val normalizedWord = NormalizedWord(node.normalizedName)
 
+    val nlpHostInfo:(String, String) = lang match {
+      case langPatternJP() => (conf.getString("COMMON_NLP_JP_WEB_HOST"), "9006")
+      case langPatternEN() => (conf.getString("COMMON_NLP_EN_WEB_HOST"), "9008")
+      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+    }
+
+    val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms")
+    val synonymList: SynonymList = Json.parse(result).as[SynonymList]
+    if (synonymList != null && synonymList.synonyms.size > 0) synonymList.synonyms.map(createQueryForSynonymNode(node, _, sentenceType))
   }
-
   /**
    * This function outputs a query for synony　nodes and edges.
    * @param node
@@ -98,15 +119,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param sentenceType
    */
   private def createQueryForSynonymNode(node:KnowledgeBaseNode, synonym:String, sentenceType:Int): Unit = {
-
     val nodeType:String = ToposoidUtils.getNodeType(sentenceType)
-
-    if(Word2VecAccessor.calcSimilarityByWord2Vec(node.normalizedName , synonym)){
-      insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym,  node.propositionId))
-      insertScript.append("|UNION ALL\n")
-      insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
-      insertScript.append("|UNION ALL\n")
-    }
+    insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym,  node.propositionId))
+    insertScript.append("|UNION ALL\n")
+    insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
+    insertScript.append("|UNION ALL\n")
   }
 
   /**
@@ -114,7 +131,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param nodeMap
    * @param edge
    */
-  private def createQueryForEdgeForAuto(nodeMap:Map[String, KnowledgeBaseNode], edge:KnowledgeBaseEdge): Unit ={
+  private def createQueryForEdgeForAuto(nodeMap:Map[String, KnowledgeBaseNode], edge:KnowledgeBaseEdge, lang:String): Unit ={
 
     val sourceNode:Option[KnowledgeBaseNode] = nodeMap.get(edge.sourceId)
     val destinationNode:Option[KnowledgeBaseNode] = nodeMap.get(edge.destinationId)
@@ -128,7 +145,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
         case PREMISE.index => "PremiseEdge"
         case CLAIM.index => "ClaimEdge"
       }
-      insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:%s {dependType:'%s', caseName:'%s',logicType:'%s'}]->(d) \n").format(
+      insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:%s {dependType:'%s', caseName:'%s',logicType:'%s', lang:'%s'}]->(d) \n").format(
         sourceNodeType,
         edge.sourceId,
         destinationNodeType,
@@ -136,7 +153,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
         edgeType,
         edge.dependType,
         edge.caseStr,
-        edge.logicType
+        edge.logicType,
+        lang
       ))
     }else{
       //エッジの両端のノードのタイプが異なる -> LogicEdgeになる

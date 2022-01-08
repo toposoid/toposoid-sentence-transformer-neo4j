@@ -1,19 +1,18 @@
 import Dependencies._
 
 ThisBuild / scalaVersion     := "2.12.12"
-ThisBuild / version          := "0.1.0"
+ThisBuild / version          := "0.2"
 ThisBuild / organization     := "com.ideal.linked"
 
 lazy val root = (project in file("."))
   .settings(
     name := "toposoid-sentence-transformer-neo4j",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "scala-common-nlp-japanese" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "scala-data-accessor-neo4j" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.1.0",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-sentence-parser-japanese" % "0.1.0",
+    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.2",
+    libraryDependencies += "com.ideal.linked" %% "scala-data-accessor-neo4j" % "0.2",
+    libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.2",
+    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.2",
+    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.2",
     libraryDependencies += "de.sciss" % "ws4j" % "0.1.0",
     libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
     libraryDependencies += "com.typesafe.play" %% "play-json" % "2.9.2"
