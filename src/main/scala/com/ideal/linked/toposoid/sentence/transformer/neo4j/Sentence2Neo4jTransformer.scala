@@ -22,7 +22,7 @@ import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
 import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
 import play.api.libs.json.{JsValue, Json}
 
@@ -41,7 +41,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   val langPatternEN: Regex = "^en_.*".r
 
   /**
-   * Main function of this module　
+   * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
    * @param sentences
    */
   def createGraphAuto(knowledgeList:List[Knowledge]): Unit = Try {
@@ -64,6 +64,61 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   }match {
     case Success(s) => s
     case Failure(e) => throw e
+  }
+
+  /**
+   * This function explicitly separates the proposition into Premise and Claim, specifies the structure, and registers the data in GraphDB.
+   * @param knowledgeSentenceSet
+   */
+  def createGraph(knowledgeSentenceSet:KnowledgeSentenceSet): Unit ={
+    //Get a list of positionIds for Premise and Claim respectively
+    val premisePropositionIds =  knowledgeSentenceSet.premiseList.map(execute(_, PREMISE.index)).toList
+    val claimPropositionIds =  knowledgeSentenceSet.claimList.map(execute(_, CLAIM.index)).toList
+
+    insertScript.clear()
+    //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
+    if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSet.premiseLogicRelation, PREMISE.index)
+
+    //If the target proposition has multiple Claims, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
+    if(claimPropositionIds.size > 1) executeForLogicRelation(claimPropositionIds, knowledgeSentenceSet.claimLogicRelation, CLAIM.index)
+
+    //If the target proposition has both Premise and CLaim,
+    // select one representative for Premise and one representative for Claim and connect them to Edge.
+    // The representative is the node with the 0th INDEX.
+    if(premisePropositionIds.size > 0 && claimPropositionIds.size > 0) {
+      val propositionRelation = PropositionRelation("IMP", 0, 1)
+      createLogicRelation(List(premisePropositionIds(0), claimPropositionIds(0)), propositionRelation, -1)
+    }
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+  }
+
+  /**
+   * This function parses the text for each Knowledge and registers it in GraphDB.
+   * @param knowledge
+   * @param sentenceType
+   * @return
+   */
+  private def execute(knowledge: Knowledge, sentenceType:Int): String ={
+
+    val json:String = Json.toJson(knowledge).toString()
+    val parserInfo:(String, String) = knowledge.lang match {
+      case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+      case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+    }
+    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
+    val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+    analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledge.lang, knowledge.extentInfoJson))
+    //As a policy, first register the node.
+    //Another option is to loop at the edge and register the node.
+    //However, processing becomes complicated because duplicate nodes are created.
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+    insertScript.clear()
+    analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledge.lang, sentenceType))
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+
+    //Returns the first propositionId.
+    analyzedSentenceObject.nodeMap.head._2.propositionId
   }
 
   /**
@@ -127,6 +182,76 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   }
 
   /**
+   * This function outputs a query for edges for createGraph function.
+   * @param nodeMap
+   * @param edge
+   * @param sentenceType
+   */
+  private def createQueryForEdge(edge:KnowledgeBaseEdge, lang:String, sentenceType:Int): Unit ={
+    val nodeType:String = sentenceType match{
+      case PREMISE.index => "PremiseNode"
+      case CLAIM.index => "ClaimNode"
+    }
+    val edgeType:String = sentenceType match{
+      case PREMISE.index => "PremiseEdge"
+      case CLAIM.index => "ClaimEdge"
+    }
+    insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:%s {dependType:'%s', caseName:'%s',logicType:'%s'}]->(d) \n").format(
+      nodeType,
+      edge.sourceId,
+      nodeType,
+      edge.destinationId,
+      edgeType,
+      edge.dependType,
+      edge.caseStr,
+      edge.logicType,
+      lang,
+    ))
+    insertScript.append("|UNION ALL\n")
+  }
+
+  /**
+   * This function outputs a query for logical edges.
+   * This is only used by createGraph function
+   * @param propositionIds
+   * @param propositionRelations
+   * @param sentenceType
+   */
+  private def executeForLogicRelation(propositionIds:List[String], propositionRelations:List[PropositionRelation], sentenceType:Int): Unit ={
+    propositionRelations.map(x => createLogicRelation(propositionIds, x, sentenceType))
+  }
+
+  /**
+   * This is sub-function of executeForLogicRelation
+   * @param propositionIds
+   * @param propositionRelation
+   * @param sentenceType
+   */
+  private def createLogicRelation(propositionIds:List[String], propositionRelation:PropositionRelation, sentenceType:Int): Unit ={
+    val sourceNodeType:String = sentenceType match{
+      case PREMISE.index => "PremiseNode"
+      case CLAIM.index => "ClaimNode"
+      case _ => "PremiseNode"
+    }
+    val destinationNodeType:String = sentenceType match{
+      case PREMISE.index => "PremiseNode"
+      case CLAIM.index => "ClaimNode"
+      case _ => "ClaimNode"
+    }
+
+    insertScript.append(("|MATCH (s:%s {propositionId: '%s'}), (d:%s {propositionId: '%s'}) WHERE (s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT')  MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
+      sourceNodeType,
+      propositionIds(propositionRelation.sourceIndex),
+      destinationNodeType,
+      propositionIds(propositionRelation.destinationIndex),
+      propositionRelation.operator,
+      "-" //The lang attribute of LogicalEdge is　defined as　'-'.
+    ))
+    print(insertScript)
+    insertScript.append("|UNION ALL\n")
+  }
+
+  /**
    * This function outputs a query for edges.
    * @param nodeMap
    * @param edge
@@ -140,7 +265,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     val destinationNodeType:String =  ToposoidUtils.getNodeType(destinationNode.get.nodeType)
 
     if(sourceNode.get.nodeType == destinationNode.get.nodeType){
-      //エッジの両端のノードのタイプが同じ
+      //In this case, the node types at both ends of the edge are the same.
       val edgeType = destinationNode.get.nodeType match{
         case PREMISE.index => "PremiseEdge"
         case CLAIM.index => "ClaimEdge"
@@ -157,7 +282,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
         lang
       ))
     }else{
-      //エッジの両端のノードのタイプが異なる -> LogicEdgeになる
+      //In this case, the types of nodes at both ends of the edge are different. That is, LogicEdge
       insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
         sourceNodeType,
         edge.sourceId,
