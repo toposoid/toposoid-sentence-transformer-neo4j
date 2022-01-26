@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.knowledgebase.regist.model.Knowledge
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import org.neo4j.driver.Result
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, FlatSpec}
 
@@ -82,7 +82,62 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
     assert(!result3.hasNext)
   }
 
+  "The Empty knowledge" should "not fail" in {
+    val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(List.empty[Knowledge], List.empty[PropositionRelation], List.empty[Knowledge], List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+  }
 
+  "The List of Japanese Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
+      List(Knowledge("A's hair is not black.", "en_US", "{}"),
+        Knowledge("B's hair is not blonde", "en_US", "{}"),
+        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+      List.empty[Knowledge], List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
+    assert(result.hasNext)
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
+    assert(result2.hasNext)
+  }
+
+  "The List of English Claims and empty Premises" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
+      List.empty[Knowledge], List.empty[PropositionRelation],
+      List(Knowledge("A's hair is not black.", "en_US", "{}"),
+        Knowledge("B's hair is not blonde", "en_US", "{}"),
+        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
+    )
+    Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'A'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'B'}) RETURN x")
+    assert(result.hasNext)
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'B'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'C'}) RETURN x")
+    assert(result2.hasNext)
+  }
+
+  "The List of Japanese Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
+
+      List(Knowledge("A's hair is not black.", "en_US", "{}"),
+        Knowledge("B's hair is not blonde", "en_US", "{}"),
+        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+      List(Knowledge("D's hair is not black.", "en_US", "{}"),
+        Knowledge("E's hair is not blonde", "en_US", "{}"),
+        Knowledge("F's hair is not black.", "en_US", "{}")),
+      List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
+    )
+    Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
+    assert(result.hasNext)
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
+    assert(result2.hasNext)
+    val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'D'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'E'}) RETURN x")
+    assert(result3.hasNext)
+    val result4:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'E'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'F'}) RETURN x")
+    assert(result4.hasNext)
+  }
 
 }
 
