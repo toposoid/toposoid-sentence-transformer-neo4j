@@ -146,7 +146,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       convertNestedMapToJson(node.rangeExpressions),
       convertMap2Json(node.categories),
       convertMap2Json(node.domains),
-      node.isDenial,
+      node.isDenialWord,
       node.isConditionalConnection,
       node.normalizedNameYomi,
       node.surfaceYomi,
