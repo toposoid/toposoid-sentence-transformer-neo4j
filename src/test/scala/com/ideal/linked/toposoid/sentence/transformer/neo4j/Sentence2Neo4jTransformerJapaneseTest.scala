@@ -36,7 +36,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   }
 
   "The list of japanese sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}"), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}"))
+    val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}", false), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'太郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
@@ -47,7 +47,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   }
 
   "The list of multiple japanese sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "ja_JP", "{}"))
+    val knowledgeList = List(Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "ja_JP", "{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'二郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
@@ -56,14 +56,14 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   }
 
   "The List of japanese sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val sentenceList = List(Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}"))
+    val sentenceList = List(Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(sentenceList)
     val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'明日が'})-[:PremiseEdge]->(:PremiseNode{surface:'雨ならば、'})-[:LogicEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
   }
 
   "The list of japanese sentences with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("三郎は映画を見た。", "ja_JP", """{"id":"Test"}"""), Knowledge("明美の趣味はガーデニングです。", "ja_JP", """{"日本語":"大丈夫かテスト"}"""))
+    val knowledgeList = List(Knowledge("三郎は映画を見た。", "ja_JP", """{"id":"Test"}""", false), Knowledge("明美の趣味はガーデニングです。", "ja_JP", """{"日本語":"大丈夫かテスト"}""", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -72,7 +72,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   }
 
   "The short japanese sentence with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("セリヌンティウスである。", "ja_JP", """{"id":"Test"}"""), Knowledge("セリヌンティウス", "ja_JP","""{"id":"Test2"}"""), Knowledge("", "ja_JP","""{"id":"Test3"}"""))
+    val knowledgeList = List(Knowledge("セリヌンティウスである。", "ja_JP", """{"id":"Test"}""", false), Knowledge("セリヌンティウス", "ja_JP","""{"id":"Test2"}""", false), Knowledge("", "ja_JP","""{"id":"Test3"}""", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -89,9 +89,9 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
 
   "The List of Japanese Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
-      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}"),
-        Knowledge("Cはブロンドではない。", "ja_JP", "{}"),
-        Knowledge("Aは黒髪ではない。", "ja_JP", "{}")),
+      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
+        Knowledge("Cはブロンドではない。", "ja_JP", "{}", false),
+        Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[Knowledge], List.empty[PropositionRelation])
       Sentence2Neo4jTransformer.createGraph(knowledgeSet)
@@ -104,9 +104,9 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   "The List of Japanese Claims and empty Premises" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
       List.empty[Knowledge], List.empty[PropositionRelation],
-      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}"),
-        Knowledge("Cはブロンドではない。", "ja_JP", "{}"),
-        Knowledge("Aは黒髪ではない。", "ja_JP", "{}")),
+      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
+        Knowledge("Cはブロンドではない。", "ja_JP", "{}", false),
+        Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
       )
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
@@ -119,12 +119,12 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   "The List of Japanese Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
 
-      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}"),
-        Knowledge("Cはブロンドではない。", "ja_JP", "{}"),
-        Knowledge("Aは黒髪ではない。", "ja_JP", "{}")),
+      List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
+        Knowledge("Cはブロンドではない。", "ja_JP", "{}", false),
+        Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
-      List(Knowledge("Dは黒髪ではない。", "ja_JP", "{}"),
-        Knowledge("Eはブロンドではない。", "ja_JP", "{}"),
+      List(Knowledge("Dは黒髪ではない。", "ja_JP", "{}", false),
+        Knowledge("Eはブロンドではない。", "ja_JP", "{}", false),
         Knowledge("Fは黒髪ではない。", "ja_JP", "{}")),
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )

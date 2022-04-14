@@ -36,7 +36,7 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   }
 
   "The list of english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life.", "en_US", "{}"), Knowledge("Seeing is believing.", "en_US" ,"{}"))
+    val knowledgeList = List(Knowledge("That's life.", "en_US", "{}", false), Knowledge("Seeing is believing.", "en_US" ,"{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:ClaimEdge]->(:ClaimNode{surface:\"\'s\"})<-[:ClaimEdge]-(:ClaimNode{surface:'life'}) RETURN x")
     assert(result.hasNext)
@@ -47,7 +47,7 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   }
 
   "The list of multiple english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life. Seeing is believing.", "en_US", "{}"))
+    val knowledgeList = List(Knowledge("That's life. Seeing is believing.", "en_US", "{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:ClaimEdge]->(:ClaimNode{surface:\"\'s\"})<-[:ClaimEdge]-(:ClaimNode{surface:'life'}) RETURN x")
     assert(result.hasNext)
@@ -56,14 +56,14 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   }
 
   "The List of english sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val sentenceList = List(Knowledge("If you can dream it, you can do it.", "en_US", "{}"))
+    val sentenceList = List(Knowledge("If you can dream it, you can do it.", "en_US", "{}", false))
     Sentence2Neo4jTransformer.createGraphAuto(sentenceList)
     val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode)-[*..]->(:PremiseNode{surface:'dream'})-[:LogicEdge]->(:ClaimNode{surface:'do'})<-[*..]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
   }
 
   "The list of english sentences with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("That's life.", "en_US", """{"id":"Test"}"""), Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}"""))
+    val knowledgeList = List(Knowledge("That's life.", "en_US", """{"id":"Test"}""", false), Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}""", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -72,7 +72,7 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   }
 
   "The short english sentence with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(Knowledge("naature", "en_US", """{"id":"Test"}"""), Knowledge("naature", "en_US","""{"id":"Test2"}"""), Knowledge("", "en_US","""{"id":"Test3"}"""))
+    val knowledgeList = List(Knowledge("naature", "en_US", """{"id":"Test"}""", false), Knowledge("naature", "en_US","""{"id":"Test2"}""", false), Knowledge("", "en_US","""{"id":"Test3"}""", false))
     Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
@@ -89,9 +89,9 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
 
   "The List of Japanese Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
-      List(Knowledge("A's hair is not black.", "en_US", "{}"),
-        Knowledge("B's hair is not blonde", "en_US", "{}"),
-        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(Knowledge("A's hair is not black.", "en_US", "{}", false),
+        Knowledge("B's hair is not blonde", "en_US", "{}", false),
+        Knowledge("C's hair is not black.", "en_US", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[Knowledge], List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
@@ -104,9 +104,9 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   "The List of English Claims and empty Premises" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
       List.empty[Knowledge], List.empty[PropositionRelation],
-      List(Knowledge("A's hair is not black.", "en_US", "{}"),
-        Knowledge("B's hair is not blonde", "en_US", "{}"),
-        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(Knowledge("A's hair is not black.", "en_US", "{}", false),
+        Knowledge("B's hair is not blonde", "en_US", "{}", false),
+        Knowledge("C's hair is not black.", "en_US", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
@@ -119,13 +119,13 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
   "The List of Japanese Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
 
-      List(Knowledge("A's hair is not black.", "en_US", "{}"),
-        Knowledge("B's hair is not blonde", "en_US", "{}"),
-        Knowledge("C's hair is not black.", "en_US", "{}")),
+      List(Knowledge("A's hair is not black.", "en_US", "{}", false),
+        Knowledge("B's hair is not blonde", "en_US", "{}", false),
+        Knowledge("C's hair is not black.", "en_US", "{}", false)),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
-      List(Knowledge("D's hair is not black.", "en_US", "{}"),
-        Knowledge("E's hair is not blonde", "en_US", "{}"),
-        Knowledge("F's hair is not black.", "en_US", "{}")),
+      List(Knowledge("D's hair is not black.", "en_US", "{}", false),
+        Knowledge("E's hair is not blonde", "en_US", "{}", false),
+        Knowledge("F's hair is not black.", "en_US", "{}", false)),
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
