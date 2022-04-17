@@ -95,9 +95,9 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[Knowledge], List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
     assert(result2.hasNext)
   }
 
@@ -110,9 +110,9 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'A'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'B'}) RETURN x")
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'A'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'B'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'C'}) RETURN x")
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'B'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'C'}) RETURN x")
     assert(result2.hasNext)
   }
 
@@ -129,13 +129,13 @@ class Sentence2Neo4jTransformerEnglishTest extends FlatSpec with DiagrammedAsser
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(knowledgeSet)
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
+    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
-    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenial:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
+    val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
     assert(result2.hasNext)
-    val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'D'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'E'}) RETURN x")
+    val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'D'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'OR'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'E'}) RETURN x")
     assert(result3.hasNext)
-    val result4:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'E'})-[*]->(:ClaimNode{surface:'is',isDenial:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenial:'true'})<-[*]-(:ClaimNode{surface:'F'}) RETURN x")
+    val result4:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'E'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LogicEdge{operator:'AND'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'F'}) RETURN x")
     assert(result4.hasNext)
   }
 
