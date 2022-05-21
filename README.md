@@ -20,6 +20,42 @@ sbt publishLocal
 
 ## Usage
 Please refer to the test code
+```scala
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.Sentence2Neo4jTransformer
+//Japanese Pattern1
+val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}", false), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false))
+Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+
+//Japanese Pattern2
+val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
+  List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
+    Knowledge("Cはブロンドではない。", "ja_JP", "{}", false),
+    Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false)),
+  List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+  List(Knowledge("Dは黒髪ではない。", "ja_JP", "{}", false),
+    Knowledge("Eはブロンドではない。", "ja_JP", "{}", false),
+    Knowledge("Fは黒髪ではない。", "ja_JP", "{}")),
+  List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
+)
+Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+
+//English Pattern1
+val knowledgeList = List(Knowledge("That's life.", "en_US", "{}", false), Knowledge("Seeing is believing.", "en_US" ,"{}", false))
+Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+
+//English Pattern2
+val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
+  List(Knowledge("A's hair is not black.", "en_US", "{}", false),
+    Knowledge("B's hair is not blonde", "en_US", "{}", false),
+    Knowledge("C's hair is not black.", "en_US", "{}", false)),
+  List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+  List(Knowledge("D's hair is not black.", "en_US", "{}", false),
+    Knowledge("E's hair is not blonde", "en_US", "{}", false),
+    Knowledge("F's hair is not black.", "en_US", "{}", false)),
+  List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
+)
+Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+```
 
 ## Note
 
