@@ -25,7 +25,7 @@ import com.ideal.linked.toposoid.sentence.transformer.neo4j.Sentence2Neo4jTransf
 //Japanese Pattern1
 val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}", false), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false))
 Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-
+val id:String = "xxxxxxxxxxxxxxxxxxxxxx"
 //Japanese Pattern2
 val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
   List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
@@ -37,11 +37,12 @@ val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
     Knowledge("Fは黒髪ではない。", "ja_JP", "{}")),
   List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
 )
-Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+Sentence2Neo4jTransformer.createGraph(id, knowledgeSet)
 
 //English Pattern1
 val knowledgeList = List(Knowledge("That's life.", "en_US", "{}", false), Knowledge("Seeing is believing.", "en_US" ,"{}", false))
 Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+val id2:String = "yyyyyyyyyyyyyyyyyyyy"
 
 //English Pattern2
 val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
@@ -54,7 +55,7 @@ val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
     Knowledge("F's hair is not black.", "en_US", "{}", false)),
   List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
 )
-Sentence2Neo4jTransformer.createGraph(knowledgeSet)
+Sentence2Neo4jTransformer.createGraph(id2, knowledgeSet)
 ```
 
 ## Note
