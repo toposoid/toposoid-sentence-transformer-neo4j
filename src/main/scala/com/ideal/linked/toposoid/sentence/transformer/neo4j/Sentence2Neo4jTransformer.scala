@@ -46,8 +46,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param knowledgeList
    */
   def createGraphAuto(propositionIds:List[String], knowledgeList:List[Knowledge]): Unit = Try {
-    for ((propositionId, knowledge) <- (propositionIds zip knowledgeList)){
-      if(propositionId.strip() != "" &&  knowledge.sentence.size != 0){
+    for ((propositionId:String, knowledge:Knowledge) <- (propositionIds zip knowledgeList)){
+      if(propositionId.trim != "" &&  knowledge.sentence.size != 0){
         insertScript.clear()
         val json:String = Json.toJson(knowledge).toString()
         val parserInfo:(String, String) = knowledge.lang match {
@@ -57,7 +57,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
         }
         val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
         val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledge.lang, knowledge.extentInfoJson, propositionId.strip()))
+        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledge.lang, knowledge.extentInfoJson, propositionId.trim))
         if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
         insertScript.clear()
         analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledge.lang))
