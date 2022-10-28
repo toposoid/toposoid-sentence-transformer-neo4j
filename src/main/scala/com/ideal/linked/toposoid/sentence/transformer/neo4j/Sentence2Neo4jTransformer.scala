@@ -26,7 +26,6 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, Knowledg
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
 import play.api.libs.json.{JsValue, Json}
 
-import io.jvm.uuid.UUID
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -43,24 +42,29 @@ object Sentence2Neo4jTransformer extends LazyLogging{
 
   /**
    * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
-   * @param sentences
+   * @param propositionIds A list of IDs corresponding to each element in knowledgeList
+   * @param knowledgeList
    */
-  def createGraphAuto(knowledgeList:List[Knowledge]): Unit = Try {
-    for(s <-knowledgeList.filter(_.sentence.size != 0)){
-      insertScript.clear()
-      val json:String = Json.toJson(s).toString()
-      val parserInfo:(String, String) = s.lang match {
-        case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
-        case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
-        case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+  def createGraphAuto(propositionIds:List[String], knowledgeList:List[Knowledge]): Unit = Try {
+    for ((propositionId, knowledge) <- (propositionIds zip knowledgeList)){
+      if(propositionId.strip() != "" &&  knowledge.sentence.size != 0){
+        insertScript.clear()
+        val json:String = Json.toJson(knowledge).toString()
+        val parserInfo:(String, String) = knowledge.lang match {
+          case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+          case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+          case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+        }
+        val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
+        val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledge.lang, knowledge.extentInfoJson, propositionId.strip()))
+        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+        insertScript.clear()
+        analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledge.lang))
+        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      }else{
+        logger.error("PropositionId is empty or knowledge.sentence.size.")
       }
-      val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
-      val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-      analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, s.lang, s.extentInfoJson, x._2.propositionId))
-      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-      insertScript.clear()
-      analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, s.lang))
-      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     }
   }match {
     case Success(s) => s
@@ -69,11 +73,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
 
   /**
    * This function explicitly separates the proposition into Premise and Claim, specifies the structure, and registers the data in GraphDB.
+   * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
    * @param knowledgeSentenceSet
    */
-  def createGraph(knowledgeSentenceSet:KnowledgeSentenceSet): Unit ={
-    //Sentences in KnowledgeSet have the same propositionId
-    val propositionId:String = UUID.random.toString
+  def createGraph(propositionId:String, knowledgeSentenceSet:KnowledgeSentenceSet): Unit ={
+    //val propositionId:String = UUID.random.toString
 
     //Get a list of positionIds for Premise and Claim respectively
     val premisePropositionIds =  knowledgeSentenceSet.premiseList.map(execute(_, PREMISE.index, propositionId)).toList
