@@ -33,8 +33,7 @@ jobs:
             docker-compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt 'testOnly **.*JapaneseTest'"
             docker-compose -f docker-compose-workflow.yml rm -fsv toposoid-common-nlp-japanese-web
             docker-compose -f docker-compose-workflow.yml rm -fsv toposoid-sentence-parser-japanese-web
-            docker rmi --force toposoid/python-nlp-japanese:3.9
-            docker rmi --force toposoid/sentence-parser-japanese-web:0.4-SNAPSHOT-workflow
+            docker rmi --force toposoid/toposoid-sentence-parser-japanese-web:0.4-SNAPSHOT-workflow
             docker rmi --force toposoid/toposoid-common-nlp-japanese-web:0.4-SNAPSHOT-workflow
             docker images
             docker system prune -f
