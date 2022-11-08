@@ -29,16 +29,16 @@ jobs:
             docker-compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt compile"
             docker-compose -f docker-compose-workflow.yml up -d neo4j
             docker-compose -f docker-compose-workflow.yml up -d toposoid-common-nlp-japanese-web
-            sleep 30
             docker-compose -f docker-compose-workflow.yml up -d toposoid-sentence-parser-japanese-web
             docker-compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt 'testOnly **.*JapaneseTest'"
             docker-compose -f docker-compose-workflow.yml rm -fsv toposoid-common-nlp-japanese-web
             docker-compose -f docker-compose-workflow.yml rm -fsv toposoid-sentence-parser-japanese-web
+            docker rmi --force toposoid/python-nlp-japanese:3.9
+            docker images
             docker system prune -f
             docker volume prune -f
             docker-compose -f docker-compose-workflow.yml up -d corenlp
             docker-compose -f docker-compose-workflow.yml up -d toposoid-common-nlp-english-web
-            sleep 30
             docker-compose -f docker-compose-workflow.yml up -d toposoid-sentence-parser-english-web
             docker-compose -f docker-compose-workflow.yml exec -T ${{ env.PJ_REPO }} bash -c "cd ${{ env.PJ_REPO }} && sbt 'testOnly **.*EnglishTest'"
       - name: Clone toposoid-scala-lib
