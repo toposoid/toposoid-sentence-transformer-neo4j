@@ -24,6 +24,7 @@ import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, Knowled
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
+import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.matching.Regex
@@ -45,25 +46,25 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionIds A list of IDs corresponding to each element in knowledgeList
    * @param knowledgeList
    */
-  def createGraphAuto(propositionIds:List[String], knowledgeList:List[Knowledge]): Unit = Try {
-    for ((propositionId:String, knowledge:Knowledge) <- (propositionIds zip knowledgeList)){
-      if(propositionId.trim != "" &&  knowledge.sentence.size != 0){
+  def createGraphAuto(knowledgeForParsers: List[KnowledgeForParser]): Unit = Try {
+    for (knowledgeForParser <- knowledgeForParsers){
+      if(knowledgeForParser.propositionId.trim != "" &&  knowledgeForParser.sentenceId.trim != "" && knowledgeForParser.knowledge.sentence.size != 0){
         insertScript.clear()
-        val json:String = Json.toJson(knowledge).toString()
-        val parserInfo:(String, String) = knowledge.lang match {
+        val json:String = Json.toJson(knowledgeForParser).toString()
+        val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
           case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
           case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
           case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
         }
         val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
         val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledge.lang, knowledge.extentInfoJson, propositionId.trim))
+        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
         if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
         insertScript.clear()
-        analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledge.lang))
+        analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledgeForParser.knowledge.lang))
         if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
       }else{
-        logger.error("PropositionId is empty or knowledge.sentence.size.")
+        logger.error("propositionId is empty or sentenceId is empty or knowledge.sentence.size.")
       }
     }
   }match {
@@ -76,26 +77,29 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
    * @param knowledgeSentenceSet
    */
-  def createGraph(propositionId:String, knowledgeSentenceSet:KnowledgeSentenceSet): Unit ={
-    //val propositionId:String = UUID.random.toString
+  def createGraph(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser): Unit ={
 
-    //Get a list of positionIds for Premise and Claim respectively
-    val premisePropositionIds =  knowledgeSentenceSet.premiseList.map(execute(_, PREMISE.index, propositionId)).toList
-    val claimPropositionIds =  knowledgeSentenceSet.claimList.map(execute(_, CLAIM.index, propositionId)).toList
+    knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index))
+    knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index))
+
+    //Get a list of sentenceIds for Premise and Claim respectively
+    val premiseSentenceIds = knowledgeSentenceSetForParser.premiseList.map(_.sentenceId)
+    val claimSentenceIds = knowledgeSentenceSetForParser.claimList.map(_.sentenceId)
 
     insertScript.clear()
     //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
-    if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSet.premiseLogicRelation, PREMISE.index)
+    //if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
+    if(premiseSentenceIds.size > 1) executeForLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
 
     //If the target proposition has multiple Claims, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
-    if(claimPropositionIds.size > 1) executeForLogicRelation(claimPropositionIds, knowledgeSentenceSet.claimLogicRelation, CLAIM.index)
+    if(claimSentenceIds.size > 1) executeForLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index)
 
     //If the target proposition has both Premise and CLaim,
     // select one representative for Premise and one representative for Claim and connect them to Edge.
     // The representative is the node with the 0th INDEX.
-    if(premisePropositionIds.size > 0 && claimPropositionIds.size > 0) {
+    if(premiseSentenceIds.size > 0 && claimSentenceIds.size > 0) {
       val propositionRelation = PropositionRelation("IMP", 0, 1)
-      createLogicRelation(List(premisePropositionIds(0), claimPropositionIds(0)), propositionRelation, -1)
+      createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1)
     }
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
   }
@@ -106,27 +110,24 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param sentenceType
    * @return
    */
-  private def execute(knowledge: Knowledge, sentenceType:Int, propositionId:String): String ={
+  private def execute(knowledgeForParser: KnowledgeForParser, sentenceType:Int): Unit ={
 
-    val json:String = Json.toJson(knowledge).toString()
-    val parserInfo:(String, String) = knowledge.lang match {
+    val json:String = Json.toJson(knowledgeForParser).toString()
+    val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
       case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
       case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
     val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
     val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-    analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledge.lang, knowledge.extentInfoJson, propositionId))
+    analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
     //As a policy, first register the node.
     //Another option is to loop at the edge and register the node.
     //However, processing becomes complicated because duplicate nodes are created.
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
     insertScript.clear()
-    analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledge.lang, sentenceType))
+    analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-
-    //Returns the first propositionId.
-    analyzedSentenceObject.nodeMap.head._2.propositionId
   }
 
   /**
@@ -134,7 +135,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node:KnowledgeBaseNode,sentenceType:Int, lang:String, json:String, propositionId:String): Unit = {
+  private def createQueryForNode(node:KnowledgeBaseNode,sentenceType:Int, lang:String, json:String): Unit = {
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
 
@@ -142,7 +143,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       nodeType,
       node.normalizedName,
       node.nodeId,
-      propositionId,
+      node.propositionId,
       node.currentId,
       node.parentId,
       node.isMainSection,
@@ -160,7 +161,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       node.surfaceYomi,
       node.modalityType,
       node.logicType,
-      lang,
+      node.lang,
       json)
     )
     val normalizedWord = NormalizedWord(node.normalizedName)
@@ -225,8 +226,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionRelations
    * @param sentenceType
    */
-  private def executeForLogicRelation(propositionIds:List[String], propositionRelations:List[PropositionRelation], sentenceType:Int): Unit ={
-    propositionRelations.map(x => createLogicRelation(propositionIds, x, sentenceType))
+  private def executeForLogicRelation(sentenceIds:List[String], propositionRelations:List[PropositionRelation], sentenceType:Int): Unit ={
+    propositionRelations.map(x => createLogicRelation(sentenceIds, x, sentenceType))
   }
 
   /**
@@ -235,7 +236,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionRelation
    * @param sentenceType
    */
-  private def createLogicRelation(propositionIds:List[String], propositionRelation:PropositionRelation, sentenceType:Int): Unit ={
+  private def createLogicRelation(sentenceIds:List[String], propositionRelation:PropositionRelation, sentenceType:Int): Unit ={
     val sourceNodeType:String = sentenceType match{
       case PREMISE.index => "PremiseNode"
       case CLAIM.index => "ClaimNode"
@@ -250,8 +251,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.nodeId =~'%s.*' AND  d.nodeId =~'%s.*') AND ((s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT'))  MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
       sourceNodeType,
       destinationNodeType,
-      propositionIds(propositionRelation.sourceIndex),
-      propositionIds(propositionRelation.destinationIndex),
+      sentenceIds(propositionRelation.sourceIndex),
+      sentenceIds(propositionRelation.destinationIndex),
       propositionRelation.operator,
       "-" //The lang attribute of LogicalEdge is　defined as　'-'.
     ))
