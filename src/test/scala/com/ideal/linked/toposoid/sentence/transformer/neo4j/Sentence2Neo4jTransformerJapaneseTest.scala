@@ -37,9 +37,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
     Neo4JAccessor.delete()
   }
 
+
   "The list of japanese sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("太郎は映画を見た。", "ja_JP", "{}", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false)))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'太郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'花子の'})-[:ClaimEdge]->(:ClaimNode{surface:'趣味は'})-[:ClaimEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x")
@@ -50,7 +52,8 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
 
   "The list of multiple japanese sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "ja_JP", "{}", false)))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'二郎は'})-[:ClaimEdge]->(:ClaimNode{surface:'見た。'})<-[:ClaimEdge]-(:ClaimNode{surface:'映画を'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'明美の'})-[:ClaimEdge]->(:ClaimNode{surface:'趣味は'})-[:ClaimEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x")
@@ -58,15 +61,17 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
   }
 
   "The List of japanese sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val sentenceList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}", false)))
-    Sentence2Neo4jTransformer.createGraphAuto(sentenceList)
-    val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'明日が'})-[:PremiseEdge]->(:PremiseNode{surface:'雨ならば、'})-[:LogicEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x")
+    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}", false)))
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'明日が'})-[:ClaimEdge]->(:ClaimNode{surface:'雨ならば、'})-[:ClaimEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
   }
 
   "The list of japanese sentences with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("三郎は映画を見た。", "ja_JP", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("明美の趣味はガーデニングです。", "ja_JP", """{"日本語":"大丈夫かテスト"}""", false)))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"日本語\":\"大丈夫かテスト\"}' return x")
@@ -75,7 +80,8 @@ class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAsse
 
   "The short japanese sentence with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("セリヌンティウスである。", "ja_JP", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("セリヌンティウス", "ja_JP","""{"id":"Test2"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("", "ja_JP","""{"id":"Test3"}""", false)))
-    Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test2\"}' return x")
