@@ -46,6 +46,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionIds A list of IDs corresponding to each element in knowledgeList
    * @param knowledgeList
    */
+  /*
+  @deprecated
   def createGraphAuto(knowledgeForParsers: List[KnowledgeForParser]): Unit = Try {
     for (knowledgeForParser <- knowledgeForParsers){
       if(knowledgeForParser.propositionId.trim != "" &&  knowledgeForParser.sentenceId.trim != "" && knowledgeForParser.knowledge.sentence.size != 0){
@@ -71,7 +73,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     case Success(s) => s
     case Failure(e) => throw e
   }
-
+  */
   /**
    * This function explicitly separates the proposition into Premise and Claim, specifies the structure, and registers the data in GraphDB.
    * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
