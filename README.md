@@ -14,6 +14,13 @@ Sbt version 1.2.8
 ## Recommended environment
 * Required: at least 8GB of RAM
 * Required: 10G or higher　of HDD
+* The following microservices must be running
+> toposoid/toposoid-sentence-parser-japanese-web
+> toposoid/toposoid-common-nlp-japanese-web
+> toposoid/toposoid-sentence-parser-english-web
+> toposoid/toposoid-common-nlp-english-web
+> toposoid/corenlp:3.4.2-workflow
+> neo4j:4.1.3
 
 ## Setup
 sbt publishLocal
@@ -21,41 +28,112 @@ sbt publishLocal
 ## Usage
 Please refer to the test code
 ```scala
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, PropositionRelation}
+import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.Sentence2Neo4jTransformer
-//Japanese Pattern1
-val knowledgeList = List(Knowledge("太郎は映画を見た。", "ja_JP", "{}", false), Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false))
-Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-val id:String = "xxxxxxxxxxxxxxxxxxxxxx"
-//Japanese Pattern2
-val knowledgeSet:KnowledgeSentenceSet = KnowledgeSentenceSet(
-  List(Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false),
-    Knowledge("Cはブロンドではない。", "ja_JP", "{}", false),
-    Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false)),
-  List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
-  List(Knowledge("Dは黒髪ではない。", "ja_JP", "{}", false),
-    Knowledge("Eはブロンドではない。", "ja_JP", "{}", false),
-    Knowledge("Fは黒髪ではない。", "ja_JP", "{}")),
-  List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
-)
-Sentence2Neo4jTransformer.createGraph(id, knowledgeSet)
+import io.jvm.uuid.UUID
 
-//English Pattern1
-val knowledgeList = List(Knowledge("That's life.", "en_US", "{}", false), Knowledge("Seeing is believing.", "en_US" ,"{}", false))
-Sentence2Neo4jTransformer.createGraphAuto(knowledgeList)
-val id2:String = "yyyyyyyyyyyyyyyyyyyy"
+object JapaneseTest extends App {
+  //Japanese Simple Sentence
+  val knowledgeList = List(KnowledgeForParser(
+    UUID.random.toString,
+    UUID.random.toString,
+    Knowledge("太郎は映画を見た。", "ja_JP", "{}", false)))
+  val knowledgeSentenceSetForParser1 = KnowledgeSentenceSetForParser(
+    List.empty[KnowledgeForParser],
+    List.empty[PropositionRelation],
+    knowledgeList,
+    List.empty[PropositionRelation])
+  Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser1)
 
-//English Pattern2
-val knowledgeSet: KnowledgeSentenceSet = KnowledgeSentenceSet(
-  List(Knowledge("A's hair is not black.", "en_US", "{}", false),
-    Knowledge("B's hair is not blonde", "en_US", "{}", false),
-    Knowledge("C's hair is not black.", "en_US", "{}", false)),
-  List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
-  List(Knowledge("D's hair is not black.", "en_US", "{}", false),
-    Knowledge("E's hair is not blonde", "en_US", "{}", false),
-    Knowledge("F's hair is not black.", "en_US", "{}", false)),
-  List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
-)
-Sentence2Neo4jTransformer.createGraph(id2, knowledgeSet)
+  //Japanese Multiple Sentence
+  val knowledgeList1 = List(
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Bは黒髪ではない。", "ja_JP", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Cはブロンドではない。", "ja_JP", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Aは黒髪ではない。", "ja_JP", "{}", false))
+  )
+
+  val knowledgeList2 = List(
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Dは黒髪ではない。", "ja_JP", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Eはブロンドではない。", "ja_JP", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("Fは黒髪ではない。", "ja_JP", "{}", false))
+  )
+  val knowledgeSentenceSetForParser2 = KnowledgeSentenceSetForParser(
+    knowledgeList1,
+    List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+    knowledgeList2,
+    List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2)))
+  Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser2)
+}
+
+object EnglishTest extends App {
+  //English Simple Sentence
+  val knowledgeList = List(KnowledgeForParser(
+    UUID.random.toString,
+    UUID.random.toString,
+    Knowledge("That's life.", "en_US", "{}", false)))
+  val knowledgeSentenceSetForParser1 = KnowledgeSentenceSetForParser(
+    List.empty[KnowledgeForParser],
+    List.empty[PropositionRelation],
+    knowledgeList,
+    List.empty[PropositionRelation])
+  Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser1)
+
+  //English Multiple Sentence
+  val knowledgeList1 = List(
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("A's hair is not black.", "en_US", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("B's hair is not blonde", "en_US", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("C's hair is not black.", "en_US", "{}", false))
+  )
+  val knowledgeList2 = List(
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("D's hair is not black.", "en_US", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("E's hair is not blonde", "en_US", "{}", false)),
+    KnowledgeForParser(
+      UUID.random.toString,
+      UUID.random.toString,
+      Knowledge("F's hair is not black.", "en_US", "{}", false))
+  )
+  val knowledgeSentenceSetForParser2 = KnowledgeSentenceSetForParser(
+    knowledgeList1,
+    List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
+    knowledgeList2,
+    List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2)))
+  Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser2)
+}
+
 ```
 
 ## Note
