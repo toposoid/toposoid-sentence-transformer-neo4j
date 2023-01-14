@@ -23,8 +23,8 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
-import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObject
-import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, AnalyzedSentenceObjects}
+import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.matching.Regex
@@ -81,8 +81,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    */
   def createGraph(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser): Unit ={
 
-    knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index))
-    knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index))
+    knowledgeSentenceSetForParser.premiseList.map(execute2(_, PREMISE.index))
+    knowledgeSentenceSetForParser.claimList.map(execute2(_, CLAIM.index))
 
     //Get a list of sentenceIds for Premise and Claim respectively
     val premiseSentenceIds = knowledgeSentenceSetForParser.premiseList.map(_.sentenceId)
@@ -131,6 +131,36 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
   }
+
+  private def execute2(knowledgeForParser: KnowledgeForParser, sentenceType:Int): Unit ={
+
+    //Analyze everything as simple sentences as Claims, not just sentenceType
+    val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
+    val json:String = Json.toJson(inputSentenceForParser).toString()
+
+    val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
+      case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+      case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+    }
+
+    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze")
+    val analyzedSentenceObjects: AnalyzedSentenceObjects = Json.parse(parseResult).as[AnalyzedSentenceObjects]
+    //Since analyzedSentenceObjects is the analysis result of one sentence, it always has one AnalyzedSentenceObject
+    if(analyzedSentenceObjects.analyzedSentenceObjects.size > 0){
+      val analyzedSentenceObject = analyzedSentenceObjects.analyzedSentenceObjects.head
+      analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
+      //As a policy, first register the node.
+      //Another option is to loop at the edge and register the node.
+      //However, processing becomes complicated because duplicate nodes are created.
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      insertScript.clear()
+      analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+    }
+  }
+
+
 
   /**
    *　This function outputs a query for nodes other than synonyms.
