@@ -15,12 +15,12 @@ Sbt version 1.2.8
 * Required: at least 8GB of RAM
 * Required: 10G or higher　of HDD
 * The following microservices must be running
-> toposoid/toposoid-sentence-parser-japanese-web
-> toposoid/toposoid-common-nlp-japanese-web
-> toposoid/toposoid-sentence-parser-english-web
-> toposoid/toposoid-common-nlp-english-web
-> toposoid/corenlp:3.4.2-workflow
-> neo4j:4.1.3
+    * toposoid/toposoid-sentence-parser-japanese-web
+    * toposoid/toposoid-common-nlp-japanese-web
+    * toposoid/toposoid-sentence-parser-english-web
+    * toposoid/toposoid-common-nlp-english-web
+    * toposoid/corenlp:3.4.2-workflow
+    * neo4j:4.1.3
 
 ## Setup
 sbt publishLocal
@@ -133,7 +133,6 @@ object EnglishTest extends App {
     List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2)))
   Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser2)
 }
-
 ```
 
 ## Note
