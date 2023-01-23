@@ -42,47 +42,14 @@ object Sentence2Neo4jTransformer extends LazyLogging{
   val langPatternEN: Regex = "^en_.*".r
 
   /**
-   * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
-   * @param propositionIds A list of IDs corresponding to each element in knowledgeList
-   * @param knowledgeList
-   */
-  /*
-  @deprecated
-  def createGraphAuto(knowledgeForParsers: List[KnowledgeForParser]): Unit = Try {
-    for (knowledgeForParser <- knowledgeForParsers){
-      if(knowledgeForParser.propositionId.trim != "" &&  knowledgeForParser.sentenceId.trim != "" && knowledgeForParser.knowledge.sentence.size != 0){
-        insertScript.clear()
-        val json:String = Json.toJson(knowledgeForParser).toString()
-        val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
-          case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
-          case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
-          case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
-        }
-        val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
-        val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
-        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-        insertScript.clear()
-        analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledgeForParser.knowledge.lang))
-        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-      }else{
-        logger.error("propositionId is empty or sentenceId is empty or knowledge.sentence.size.")
-      }
-    }
-  }match {
-    case Success(s) => s
-    case Failure(e) => throw e
-  }
-  */
-  /**
    * This function explicitly separates the proposition into Premise and Claim, specifies the structure, and registers the data in GraphDB.
    * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
    * @param knowledgeSentenceSet
    */
   def createGraph(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser): Unit ={
 
-    knowledgeSentenceSetForParser.premiseList.map(execute2(_, PREMISE.index))
-    knowledgeSentenceSetForParser.claimList.map(execute2(_, CLAIM.index))
+    knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index))
+    knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index))
 
     //Get a list of sentenceIds for Premise and Claim respectively
     val premiseSentenceIds = knowledgeSentenceSetForParser.premiseList.map(_.sentenceId)
@@ -104,35 +71,22 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1)
     }
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+
+    //CREATE INDEX
+    Neo4JAccessor.executeQuery("CREATE CONSTRAINT premiseNodeIdIndex IF NOT EXISTS ON(n:PremiseNode) ASSERT n.nodeId IS UNIQUE")
+    Neo4JAccessor.executeQuery("CREATE CONSTRAINT claimNodeIdIndex IF NOT EXISTS ON(n:ClaimNode) ASSERT n.nodeId IS UNIQUE")
+    Neo4JAccessor.executeQuery("CREATE CONSTRAINT synonymNodeIdIndex IF NOT EXISTS ON(n:SynonymNode) ASSERT n.nodeId IS UNIQUE")
+    Neo4JAccessor.executeQuery("CREATE INDEX premisePropositionIdIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.propositionId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX claimPropositionIdIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.propositionId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX synonymPropositionIdIndex IF NOT EXISTS FOR (n:SynonymNode) ON (n.propositionId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX premiseSurfaceIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.surface)")
+    Neo4JAccessor.executeQuery("CREATE INDEX claimSurfaceIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.surface)")
+    Neo4JAccessor.executeQuery("CREATE INDEX premiseRelationshipCaseNameIndex IF NOT EXISTS FOR (r:PremiseEdge) ON (r.caseName)")
+    Neo4JAccessor.executeQuery("CREATE INDEX claimRelationshipCaseNameIndex IF NOT EXISTS FOR (r:ClaimEdge) ON (r.caseName)")
+
   }
 
-  /**
-   * This function parses the text for each Knowledge and registers it in GraphDB.
-   * @param knowledge
-   * @param sentenceType
-   * @return
-   */
   private def execute(knowledgeForParser: KnowledgeForParser, sentenceType:Int): Unit ={
-
-    val json:String = Json.toJson(knowledgeForParser).toString()
-    val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
-      case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
-      case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
-      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
-    }
-    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
-    val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
-    analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
-    //As a policy, first register the node.
-    //Another option is to loop at the edge and register the node.
-    //However, processing becomes complicated because duplicate nodes are created.
-    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-    insertScript.clear()
-    analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
-    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
-  }
-
-  private def execute2(knowledgeForParser: KnowledgeForParser, sentenceType:Int): Unit ={
 
     //Analyze everything as simple sentences as Claims, not just sentenceType
     val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
@@ -292,11 +246,94 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     insertScript.append("|UNION ALL\n")
   }
 
+
+  /**
+   * Convert named entity information to Json representation
+   * @param m
+   * @return
+   */
+  private def convertNestedMapToJson(m:Map[String, Map[String, String]]): String ={
+    val json: JsValue = Json.toJson(m)
+    Json.stringify(json)
+  }
+
+  /**
+   * Convert Map object to Json representation
+   * @param m
+   * @return
+   */
+  private def convertMap2Json(m:Map[String, String]): String ={
+    val json: JsValue = Json.toJson(m)
+    Json.stringify(json)
+  }
+
+  /**
+   * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
+   * @param propositionIds A list of IDs corresponding to each element in knowledgeList
+   * @param knowledgeList
+   */
+  /*
+  @deprecated
+  def createGraphAuto(knowledgeForParsers: List[KnowledgeForParser]): Unit = Try {
+    for (knowledgeForParser <- knowledgeForParsers){
+      if(knowledgeForParser.propositionId.trim != "" &&  knowledgeForParser.sentenceId.trim != "" && knowledgeForParser.knowledge.sentence.size != 0){
+        insertScript.clear()
+        val json:String = Json.toJson(knowledgeForParser).toString()
+        val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
+          case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+          case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+          case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+        }
+        val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
+        val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+        analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  x._2.nodeType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
+        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+        insertScript.clear()
+        analyzedSentenceObject.edgeList.map(createQueryForEdgeForAuto(analyzedSentenceObject.nodeMap, _, knowledgeForParser.knowledge.lang))
+        if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+      }else{
+        logger.error("propositionId is empty or sentenceId is empty or knowledge.sentence.size.")
+      }
+    }
+  }match {
+    case Success(s) => s
+    case Failure(e) => throw e
+  }
+  */
+  /**
+   * This function parses the text for each Knowledge and registers it in GraphDB.
+   * @param knowledge
+   * @param sentenceType
+   * @return
+   */
+  /*
+  private def execute(knowledgeForParser: KnowledgeForParser, sentenceType:Int): Unit ={
+
+    val json:String = Json.toJson(knowledgeForParser).toString()
+    val parserInfo:(String, String) = knowledgeForParser.knowledge.lang match {
+      case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
+      case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
+    }
+    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyzeOneSentence")
+    val analyzedSentenceObject: AnalyzedSentenceObject = Json.parse(parseResult).as[AnalyzedSentenceObject]
+    analyzedSentenceObject.nodeMap.map(x =>  createQueryForNode(x._2,  sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
+    //As a policy, first register the node.
+    //Another option is to loop at the edge and register the node.
+    //However, processing becomes complicated because duplicate nodes are created.
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+    insertScript.clear()
+    analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.stripMargin, ""))
+  }
+  */
+
   /**
    * This function outputs a query for edges.
    * @param nodeMap
    * @param edge
    */
+  /*
   private def createQueryForEdgeForAuto(nodeMap:Map[String, KnowledgeBaseNode], edge:KnowledgeBaseEdge, lang:String): Unit ={
 
     val sourceNode:Option[KnowledgeBaseNode] = nodeMap.get(edge.sourceId)
@@ -334,26 +371,6 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     }
     insertScript.append("|UNION ALL\n")
   }
-
-  /**
-   * Convert named entity information to Json representation
-   * @param m
-   * @return
-   */
-  private def convertNestedMapToJson(m:Map[String, Map[String, String]]): String ={
-    val json: JsValue = Json.toJson(m)
-    Json.stringify(json)
-  }
-
-  /**
-   * Convert Map object to Json representation
-   * @param m
-   * @return
-   */
-  private def convertMap2Json(m:Map[String, String]): String ={
-    val json: JsValue = Json.toJson(m)
-    Json.stringify(json)
-  }
-
+  */
 }
 
