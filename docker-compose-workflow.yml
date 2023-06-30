@@ -8,7 +8,7 @@ networks:
         - subnet: 172.30.0.0/24
 services:
   toposoid-sentence-transformer-neo4j:
-    image: toposoid-sentence-transformer-neo4j:0.4
+    image: toposoid-sentence-transformer-neo4j:0.5-SNAPSHOT
     tty: true
     environment:
       - GRAPHDB_HOST=172.30.0.2
@@ -20,7 +20,7 @@ services:
       app_net:
         ipv4_address: 172.30.0.3
   toposoid-sentence-parser-japanese-web:
-    image: toposoid/toposoid-sentence-parser-japanese-web:0.4-workflow
+    image: toposoid/toposoid-sentence-parser-japanese-web:0.5-SNAPSHOT-workflow
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.4
       - PLAY_HTTP_PORT=9001
@@ -30,7 +30,7 @@ services:
     ports:
       - 9001:9001
   toposoid-common-nlp-japanese-web:
-    image: toposoid/toposoid-common-nlp-japanese-web:0.4-workflow
+    image: toposoid/toposoid-common-nlp-japanese-web:0.5-SNAPSHOT-workflow
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.5
       - SYNONYM_NOUN_SIMILARITY_THRESHHOLD_JP=0.52
@@ -45,7 +45,7 @@ services:
     ports:
       - 9006:9006
   toposoid-sentence-parser-english-web:
-    image: toposoid/toposoid-sentence-parser-english-web:0.4
+    image: toposoid/toposoid-sentence-parser-english-web:0.5-SNAPSHOT
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.6
       - PLAY_HTTP_PORT=9007
@@ -56,7 +56,7 @@ services:
     ports:
       - 9007:9007
   toposoid-common-nlp-english-web:
-    image: toposoid/toposoid-common-nlp-english-web:0.4
+    image: toposoid/toposoid-common-nlp-english-web:0.5-SNAPSHOT
     environment:
       - PRIVATE_IP_ADDRESS=172.30.0.7
       - SYNONYM_NOUN_SIMILARITY_THRESHHOLD_EN=0.52
