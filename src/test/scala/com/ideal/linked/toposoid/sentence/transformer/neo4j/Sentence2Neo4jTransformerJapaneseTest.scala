@@ -20,10 +20,11 @@ import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import org.neo4j.driver.Result
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, DiagrammedAssertions, FlatSpec}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.flatspec.AnyFlatSpec
 import io.jvm.uuid.UUID
 
-class Sentence2Neo4jTransformerJapaneseTest extends FlatSpec with DiagrammedAssertions with BeforeAndAfter with BeforeAndAfterAll {
+class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndAfter with BeforeAndAfterAll {
 
   before {
     Neo4JAccessor.delete()
