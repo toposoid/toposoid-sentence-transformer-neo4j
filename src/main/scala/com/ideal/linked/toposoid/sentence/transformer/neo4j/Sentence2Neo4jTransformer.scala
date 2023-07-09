@@ -70,7 +70,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       val propositionRelation = PropositionRelation("IMP", 0, 1)
       createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1)
     }
-    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().strip(), ""))
+    if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
 
     //CREATE INDEX
     Neo4JAccessor.executeQuery("CREATE CONSTRAINT premiseNodeIdIndex IF NOT EXISTS ON(n:PremiseNode) ASSERT n.nodeId IS UNIQUE")
@@ -107,10 +107,10 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       //As a policy, first register the node.
       //Another option is to loop at the edge and register the node.
       //However, processing becomes complicated because duplicate nodes are created.
-      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().strip(), ""))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
       insertScript.clear()
       analyzedSentenceObject.edgeList.map(createQueryForEdge(_, knowledgeForParser.knowledge.lang, sentenceType))
-      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().strip(), ""))
+      if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
     }
   }
 
