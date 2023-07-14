@@ -7,8 +7,8 @@ Toposoid is a knowledge base construction platform.(see [Toposoid　Root Project
 [![Unit Test Action](https://github.com/toposoid/toposoid-sentence-transformer-neo4j/actions/workflows/action.yml/badge.svg?branch=main)](https://github.com/toposoid/toposoid-sentence-transformer-neo4j/actions/workflows/action.yml)
 
 ## Requirements
-Scala version 2.12.x,   
-Sbt version 1.2.8
+Scala version 2.13.x,   
+Sbt version 1.9.0
 [KNP 4.19](https://nlp.ist.i.kyoto-u.ac.jp/?KNP)
 
 ## Recommended environment
