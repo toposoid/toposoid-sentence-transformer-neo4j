@@ -125,7 +125,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
 
-    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', extentText:'%s' })\n".format(
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', referenceIdMap:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', extentText:'%s' })\n".format(
       nodeType,
       node.predicateArgumentStructure.normalizedName,
       node.nodeId,
@@ -142,13 +142,14 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       convertNestedMapToJson(node.localContext.rangeExpressions),
       convertMap2Json(node.localContext.categories),
       convertMap2Json(node.localContext.domains),
+      convertMap2Json(node.localContext.referenceIdMap),
       node.predicateArgumentStructure.isDenialWord,
       node.predicateArgumentStructure.isConditionalConnection,
       node.predicateArgumentStructure.normalizedNameYomi,
       node.predicateArgumentStructure.surfaceYomi,
       node.predicateArgumentStructure.modalityType,
       node.predicateArgumentStructure.logicType,
-      node.predicateArgumentStructure.morphemes.toString(),
+      convertList2Json(node.predicateArgumentStructure.morphemes),
       node.localContext.lang,
       json)
     )
@@ -268,6 +269,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     val json: JsValue = Json.toJson(m)
     Json.stringify(json)
   }
+
+  private def convertList2Json(l:List[String]): String = {
+    val json: JsValue = Json.toJson(l)
+    Json.stringify(json)
+  }
+
+
 
   /**
    * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
