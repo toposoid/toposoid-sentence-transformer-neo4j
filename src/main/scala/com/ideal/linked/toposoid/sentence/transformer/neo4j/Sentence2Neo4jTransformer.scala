@@ -125,32 +125,35 @@ object Sentence2Neo4jTransformer extends LazyLogging{
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
 
-    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',lang:'%s', extentText:'%s' })\n".format(
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', referenceIdMap:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', extentText:'%s' })\n".format(
       nodeType,
-      node.normalizedName,
+      node.predicateArgumentStructure.normalizedName,
       node.nodeId,
       node.propositionId,
-      node.currentId,
-      node.parentId,
-      node.isMainSection,
-      node.surface,
-      node.normalizedName,
-      node.dependType,
-      node.caseType,
-      node.namedEntity,
-      convertNestedMapToJson(node.rangeExpressions),
-      convertMap2Json(node.categories),
-      convertMap2Json(node.domains),
-      node.isDenialWord,
-      node.isConditionalConnection,
-      node.normalizedNameYomi,
-      node.surfaceYomi,
-      node.modalityType,
-      node.logicType,
-      node.lang,
+      node.sentenceId,
+      node.predicateArgumentStructure.currentId,
+      node.predicateArgumentStructure.parentId,
+      node.predicateArgumentStructure.isMainSection,
+      node.predicateArgumentStructure.surface,
+      node.predicateArgumentStructure.normalizedName,
+      node.predicateArgumentStructure.dependType,
+      node.predicateArgumentStructure.caseType,
+      node.localContext.namedEntity,
+      convertNestedMapToJson(node.localContext.rangeExpressions),
+      convertMap2Json(node.localContext.categories),
+      convertMap2Json(node.localContext.domains),
+      convertMap2Json(node.localContext.referenceIdMap),
+      node.predicateArgumentStructure.isDenialWord,
+      node.predicateArgumentStructure.isConditionalConnection,
+      node.predicateArgumentStructure.normalizedNameYomi,
+      node.predicateArgumentStructure.surfaceYomi,
+      node.predicateArgumentStructure.modalityType,
+      node.predicateArgumentStructure.logicType,
+      convertList2Json(node.predicateArgumentStructure.morphemes),
+      node.localContext.lang,
       json)
     )
-    val normalizedWord = NormalizedWord(node.normalizedName)
+    val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
 
     val nlpHostInfo:(String, String) = lang match {
       case langPatternJP() => (conf.getString("COMMON_NLP_JP_WEB_HOST"), "9006")
@@ -266,6 +269,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     val json: JsValue = Json.toJson(m)
     Json.stringify(json)
   }
+
+  private def convertList2Json(l:List[String]): String = {
+    val json: JsValue = Json.toJson(l)
+    Json.stringify(json)
+  }
+
+
 
   /**
    * This function automatically separates the proposition into Premise and Claim, recognizes the structure, and registers the data in GraphDB.
