@@ -15,6 +15,7 @@
  */
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.{JsValue, Json}
 
@@ -45,4 +46,11 @@ object QueryManagementUtils  extends LazyLogging {
     val json: JsValue = Json.toJson(l)
     Json.stringify(json)
   }
+
+  def convertList2JsonForKnowledgeFeatureReference(l: List[KnowledgeFeatureReference]): String = {
+    val json: JsValue = Json.toJson(l)
+    Json.stringify(json)
+  }
+
+
 }

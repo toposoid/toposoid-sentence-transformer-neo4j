@@ -19,12 +19,12 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
-import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
+import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeFeatureReference}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertMap2Json, convertNestedMapToJson}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
@@ -56,7 +56,7 @@ object QueryManagementForBaseNode  extends LazyLogging {
 
       analyzedSentenceObject.nodeMap.foldLeft(insertScript){
         (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.extentInfoJson))
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang))
         }
       }
 
@@ -80,11 +80,13 @@ object QueryManagementForBaseNode  extends LazyLogging {
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, json: String): StringBuilder = {
+  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String): StringBuilder = {
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
     val insertScript= new StringBuilder
-    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', referenceIdMap:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', extentText:'%s' })\n".format(
+    //val testList = List(KnowledgeFeatureReference("id1", 0, "", "", 0, """{"test": "hoge"}"""), KnowledgeFeatureReference("id2", 0, "", "", 0, """{"test2": "fuga"}"""))
+
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', knowledgeFeatureReferences:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s'})\n".format(
       nodeType,
       node.predicateArgumentStructure.normalizedName,
       node.nodeId,
@@ -101,7 +103,7 @@ object QueryManagementForBaseNode  extends LazyLogging {
       convertNestedMapToJson(node.localContext.rangeExpressions),
       convertMap2Json(node.localContext.categories),
       convertMap2Json(node.localContext.domains),
-      convertMap2Json(node.localContext.referenceIdMap),
+      convertList2JsonForKnowledgeFeatureReference(node.localContext.knowledgeFeatureReferences),
       node.predicateArgumentStructure.isDenialWord,
       node.predicateArgumentStructure.isConditionalConnection,
       node.predicateArgumentStructure.normalizedNameYomi,
@@ -109,8 +111,7 @@ object QueryManagementForBaseNode  extends LazyLogging {
       node.predicateArgumentStructure.modalityType,
       node.predicateArgumentStructure.logicType,
       convertList2Json(node.predicateArgumentStructure.morphemes),
-      node.localContext.lang,
-      json
+      node.localContext.lang
     ))
     val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
 

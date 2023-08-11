@@ -18,9 +18,10 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{SENTENCE, ToposoidUtils}
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
-import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertMap2Json
+import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeForParser
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2JsonForKnowledgeFeatureReference}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.matching.Regex
@@ -47,14 +48,14 @@ object QueryManagementForFeatureNode extends LazyLogging{
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
     //val knowledgeFeatureNode = KnowledgeFeatureNode(featureNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SENTENCE.index)
-    val referenceIdMap: String = convertMap2Json(Map.empty[String, String])
-    insertScript.append("|MERGE (:%s {featureNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", referenceIdMap:'%s', lang:'%s'})\n".format(
+    val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
+    insertScript.append("|MERGE (:%s {featureNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", knowledgeFeatureReference:'%s', lang:'%s'})\n".format(
       nodeType,
       featureNodeId,
       propositionId,
       sentenceId,
       sentence,
-      referenceIdMap,
+      knowledgeFeatureReference,
       lang
     ))
     if (insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
