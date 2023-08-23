@@ -143,7 +143,7 @@ object QueryManagementForBaseNode  extends LazyLogging {
   private def createQueryForSynonymNode(node: KnowledgeBaseNode, synonym: String, sentenceType: Int): StringBuilder = {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym, node.propositionId))
+    insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym, node.propositionId, node.sentenceId))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")
