@@ -18,7 +18,7 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, LOCAL, PREDICATE_ARGUMENT, PREMISE, ToposoidUtils}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeFeatureReference}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
@@ -29,7 +29,7 @@ import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
 import scala.util.matching.Regex
-object QueryManagementForBaseNode  extends LazyLogging {
+object QueryManagementForLocalNode  extends LazyLogging {
 
   val re = "UNION ALL\n$".r
   val langPatternJP: Regex = "^ja_.*".r
@@ -43,8 +43,8 @@ object QueryManagementForBaseNode  extends LazyLogging {
     val json: String = Json.toJson(inputSentenceForParser).toString()
 
     val parserInfo: (String, String) = knowledgeForParser.knowledge.lang match {
-      case langPatternJP() => (conf.getString("SENTENCE_PARSER_JP_WEB_HOST"), "9001")
-      case langPatternEN() => (conf.getString("SENTENCE_PARSER_EN_WEB_HOST"), "9007")
+      case langPatternJP() => (conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT"))
+      case langPatternEN() => (conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT"))
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
 
@@ -82,7 +82,7 @@ object QueryManagementForBaseNode  extends LazyLogging {
    */
   private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String): StringBuilder = {
 
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val insertScript= new StringBuilder
     //val testList = List(KnowledgeFeatureReference("id1", 0, "", "", 0, """{"test": "hoge"}"""), KnowledgeFeatureReference("id2", 0, "", "", 0, """{"test2": "fuga"}"""))
 
@@ -116,8 +116,8 @@ object QueryManagementForBaseNode  extends LazyLogging {
     val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
 
     val nlpHostInfo: (String, String) = lang match {
-      case langPatternJP() => (conf.getString("COMMON_NLP_JP_WEB_HOST"), "9006")
-      case langPatternEN() => (conf.getString("COMMON_NLP_EN_WEB_HOST"), "9008")
+      case langPatternJP() => (conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_PORT"))
+      case langPatternEN() => (conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_PORT"))
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
 
@@ -141,11 +141,11 @@ object QueryManagementForBaseNode  extends LazyLogging {
    * @param sentenceType
    */
   private def createQueryForSynonymNode(node: KnowledgeBaseNode, synonym: String, sentenceType: Int): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym, node.propositionId, node.sentenceId))
     insertScript.append("|UNION ALL\n")
-    insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similality:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
+    insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similarity:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")
     insertScript
   }

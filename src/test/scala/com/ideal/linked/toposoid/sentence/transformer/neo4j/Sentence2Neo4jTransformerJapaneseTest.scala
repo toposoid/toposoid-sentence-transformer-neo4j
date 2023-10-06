@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import org.neo4j.driver.Result
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -49,11 +49,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result2.hasNext)
     val result3:Result = Neo4JAccessor.executeQueryAndReturn("MAtCH x = (:SynonymNode{nodeName:'フィルム'})-[:SynonymEdge]->(:ClaimNode{surface:'映画を'}) return x")
     assert(result3.hasNext)
-    val result4:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'太郎は映画を見た。'}) RETURN x")
+    val result4:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'}) RETURN x")
     assert(result4.hasNext)
-    val result5: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x")
+    val result5: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x")
     assert(result5.hasNext)
-    val result6: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'太郎は映画を見た。'})-[*]-(:ClaimFeatureNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x")
+    val result6: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'})-[*]-(:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x")
     assert(!result6.hasNext)
   }
 
@@ -65,7 +65,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'明美の'})-[:ClaimEdge]->(:ClaimNode{surface:'趣味は'})-[:ClaimEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x")
     assert(result2.hasNext)
-    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'二郎は映画を見た。明美の趣味はガーデニングです。'}) RETURN x")
+    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'二郎は映画を見た。明美の趣味はガーデニングです。'}) RETURN x")
     assert(result3.hasNext)
   }
 
@@ -75,7 +75,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
     val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'明日が'})-[:ClaimEdge]->(:ClaimNode{surface:'雨ならば、'})-[:ClaimEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
-    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'明日が雨ならば、三郎は映画を見るだろう。'}) RETURN x")
+    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'明日が雨ならば、三郎は映画を見るだろう。'}) RETURN x")
     assert(result2.hasNext)
 
   }
@@ -88,7 +88,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     //assert(result.hasNext)
     //val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"日本語\":\"大丈夫かテスト\"}' return x")
     //assert(result2.hasNext)
-    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'三郎は映画を見た。'})-[:LogicEdge{operator:'AND'}]-(:ClaimFeatureNode{sentence:'明美の趣味はガーデニングです。'}) RETURN x")
+    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'三郎は映画を見た。'})-[:LogicEdge{operator:'AND'}]-(:SemiGlobalClaimNode{sentence:'明美の趣味はガーデニングです。'}) RETURN x")
     assert(result3.hasNext)
   }
 
@@ -102,9 +102,9 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     //assert(result2.hasNext)
     //val result3:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x")
     //assert(!result3.hasNext)
-    val result4: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'セリヌンティウスである。'}) RETURN x")
+    val result4: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウスである。'}) RETURN x")
     assert(result4.hasNext)
-    val result5: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'セリヌンティウス'}) RETURN x")
+    val result5: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウス'}) RETURN x")
     assert(result5.hasNext)
   }
 
@@ -126,7 +126,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'Ａは'})-[:PremiseEdge]->(:PremiseNode{surface:'黒髪ではない。'})<-[:LogicEdge{operator:'OR'}]-(:PremiseNode{surface:'ブロンドではない。'})<-[:PremiseEdge]-(:PremiseNode{surface:'Ｃは'}) RETURN x")
     assert(result2.hasNext)
-    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseFeatureNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:PremiseFeatureNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:PremiseFeatureNode{sentence:'Aは黒髪ではない。'}) RETURN x")
+    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x")
     assert(result3.hasNext)
 
 
@@ -146,7 +146,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'Ａは'})-[:ClaimEdge]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LogicEdge{operator:'OR'}]-(:ClaimNode{surface:'ブロンドではない。'})<-[:ClaimEdge]-(:ClaimNode{surface:'Ｃは'}) RETURN x")
     assert(result2.hasNext)
-    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:ClaimFeatureNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:ClaimFeatureNode{sentence:'Aは黒髪ではない。'}) RETURN x")
+    val result3: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:SemiGlobalClaimNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:SemiGlobalClaimNode{sentence:'Aは黒髪ではない。'}) RETURN x")
     assert(result3.hasNext)
 
   }
@@ -174,11 +174,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result4.hasNext)
     val result5: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'Ｂは'})-[:PremiseEdge]->(:PremiseNode{surface:'黒髪ではない。'})-[:LogicEdge{operator:'IMP'}]->(:ClaimNode{surface:'黒髪ではない。'})<-[:ClaimEdge]-(:ClaimNode{surface:'Ｄは'}) RETURN x")
     assert(result5.hasNext)
-    val result6: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseFeatureNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:PremiseFeatureNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:PremiseFeatureNode{sentence:'Aは黒髪ではない。'}) RETURN x")
+    val result6: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:LogicEdge{operator:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x")
     assert(result6.hasNext)
-    val result7: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimFeatureNode{sentence:'Dは黒髪ではない。'})-[:LogicEdge{operator:'OR'}]->(:ClaimFeatureNode{sentence:'Eはブロンドではない。'})-[:LogicEdge{operator:'AND'}]->(:ClaimFeatureNode{sentence:'Fは黒髪ではない。'}) RETURN x")
+    val result7: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'})-[:LogicEdge{operator:'OR'}]->(:SemiGlobalClaimNode{sentence:'Eはブロンドではない。'})-[:LogicEdge{operator:'AND'}]->(:SemiGlobalClaimNode{sentence:'Fは黒髪ではない。'}) RETURN x")
     assert(result7.hasNext)
-    val result8: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseFeatureNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'IMP'}]-(:ClaimFeatureNode{sentence:'Dは黒髪ではない。'}) RETURN x")
+    val result8: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:LogicEdge{operator:'IMP'}]-(:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'}) RETURN x")
     assert(result8.hasNext)
 
 

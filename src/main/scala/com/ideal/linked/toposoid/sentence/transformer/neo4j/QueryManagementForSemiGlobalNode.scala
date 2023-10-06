@@ -17,37 +17,38 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{SENTENCE, ToposoidUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, SEMIGLOBAL, SENTENCE, ToposoidUtils}
 import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeForParser
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2JsonForKnowledgeFeatureReference}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.matching.Regex
 
-object QueryManagementForFeatureNode extends LazyLogging{
+object QueryManagementForSemiGlobalNode extends LazyLogging{
 
   val re = "UNION ALL\n$".r
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def executeForFeature(knowledgeForParser: KnowledgeForParser, sentenceType: Int): Unit = {
-    createQueryForFeatureNode(
+  def executeForSemiGlobalNode(knowledgeForParser: KnowledgeForParser, sentenceType: Int): Unit = {
+    createQueryForSemiGlobalNode(
       knowledgeForParser.propositionId,
       knowledgeForParser.sentenceId,
       knowledgeForParser.knowledge.sentence,
+
       sentenceType,
       knowledgeForParser.knowledge.lang
     )
   }
 
-  private def createQueryForFeatureNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String): Unit = {
+  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String): Unit = {
     val insertScript = new StringBuilder
     val featureNodeId = sentenceId
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
     //val knowledgeFeatureNode = KnowledgeFeatureNode(featureNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SENTENCE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
     val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
     insertScript.append("|MERGE (:%s {featureNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", knowledgeFeatureReference:'%s', lang:'%s'})\n".format(
       nodeType,
@@ -62,24 +63,24 @@ object QueryManagementForFeatureNode extends LazyLogging{
     insertScript.clear()
   }
 
-  def executeForFeatureLogicRelation(sentenceIds: List[String], propositionRelations: List[PropositionRelation], sentenceType: Int): StringBuilder = {
+  def executeForSemiGlobalLogicRelation(sentenceIds: List[String], propositionRelations: List[PropositionRelation], sentenceType: Int): StringBuilder = {
     propositionRelations.foldLeft(new StringBuilder) {
       (acc, x) => {
-        acc.append(createFeatureLogicRelation(sentenceIds, x, sentenceType))
+        acc.append(createSemiGlobalLogicRelation(sentenceIds, x, sentenceType))
       }
     }
   }
 
-  def createFeatureLogicRelation(sentenceIds: List[String], propositionRelation: PropositionRelation, sentenceType: Int): StringBuilder = {
+  def createSemiGlobalLogicRelation(sentenceIds: List[String], propositionRelation: PropositionRelation, sentenceType: Int): StringBuilder = {
     val insertScript = new StringBuilder
 
-    val sourceNodeType: String = ToposoidUtils.getNodeType(sentenceType, SENTENCE.index) match {
-      case "UnknownNode" => "PremiseFeatureNode"
-      case x => x
+    val sourceNodeType: String = sentenceType match {
+      case -1 => ToposoidUtils.getNodeType(PREMISE.index, SEMIGLOBAL.index, SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
     }
-    val destinationNodeType: String = ToposoidUtils.getNodeType(sentenceType, SENTENCE.index) match {
-      case "UnknownNode" => "ClaimFeatureNode"
-      case x => x
+    val destinationNodeType: String = sentenceType match {
+      case -1 => ToposoidUtils.getNodeType(CLAIM.index, SEMIGLOBAL.index, SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
     }
     insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.featureNodeId =~'%s.*' AND  d.featureNodeId =~'%s.*') MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
       sourceNodeType,
