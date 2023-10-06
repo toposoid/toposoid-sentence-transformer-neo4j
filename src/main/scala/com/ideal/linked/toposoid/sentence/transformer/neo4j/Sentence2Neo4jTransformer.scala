@@ -20,8 +20,8 @@ import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeSentenceSetForParser
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForBaseNode.{createLogicRelation, execute, executeForLogicRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForFeatureNode.{createFeatureLogicRelation, executeForFeature, executeForFeatureLogicRelation}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForLocalNode.{createLogicRelation, execute, executeForLogicRelation}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForSemiGlobalNode.{createSemiGlobalLogicRelation, executeForSemiGlobalLogicRelation, executeForSemiGlobalNode}
 import com.typesafe.scalalogging.LazyLogging
 
 /**
@@ -42,8 +42,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     val insertScript = new StringBuilder
     knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index))
     knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index))
-    knowledgeSentenceSetForParser.premiseList.map(executeForFeature(_, PREMISE.index))
-    knowledgeSentenceSetForParser.claimList.map(executeForFeature(_, CLAIM.index))
+    knowledgeSentenceSetForParser.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index))
+    knowledgeSentenceSetForParser.claimList.map(executeForSemiGlobalNode(_, CLAIM.index))
 
     //Get a list of sentenceIds for Premise and Claim respectively
     val premiseSentenceIds = knowledgeSentenceSetForParser.premiseList.map(_.sentenceId)
@@ -54,13 +54,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     //if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
     if(premiseSentenceIds.size > 1) {
       insertScript.append(executeForLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index))
-      insertScript.append(executeForFeatureLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index))
+      insertScript.append(executeForSemiGlobalLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index))
     }
 
     //If the target proposition has multiple Claims, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
     if(claimSentenceIds.size > 1) {
       insertScript.append(executeForLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index))
-      insertScript.append(executeForFeatureLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index))
+      insertScript.append(executeForSemiGlobalLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index))
     }
 
     //If the target proposition has both Premise and CLaim,
@@ -69,7 +69,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     if(premiseSentenceIds.size > 0 && claimSentenceIds.size > 0) {
       val propositionRelation = PropositionRelation("IMP", 0, 1)
       insertScript.append(createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
-      insertScript.append(createFeatureLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
+      insertScript.append(createSemiGlobalLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
     }
     if(insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
 
@@ -80,6 +80,9 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     Neo4JAccessor.executeQuery("CREATE INDEX premisePropositionIdIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.propositionId)")
     Neo4JAccessor.executeQuery("CREATE INDEX claimPropositionIdIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.propositionId)")
     Neo4JAccessor.executeQuery("CREATE INDEX synonymPropositionIdIndex IF NOT EXISTS FOR (n:SynonymNode) ON (n.propositionId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX premiseSentenceIdIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.sentenceId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX claimSentenceIdIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.sentenceId)")
+    Neo4JAccessor.executeQuery("CREATE INDEX synonymSentenceIdIndex IF NOT EXISTS FOR (n:SynonymNode) ON (n.sentenceId)")
     Neo4JAccessor.executeQuery("CREATE INDEX premiseSurfaceIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.surface)")
     Neo4JAccessor.executeQuery("CREATE INDEX claimSurfaceIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.surface)")
     Neo4JAccessor.executeQuery("CREATE INDEX premiseRelationshipCaseNameIndex IF NOT EXISTS FOR (r:PremiseEdge) ON (r.caseName)")
