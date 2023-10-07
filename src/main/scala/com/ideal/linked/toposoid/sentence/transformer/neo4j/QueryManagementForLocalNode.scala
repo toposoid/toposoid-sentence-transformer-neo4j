@@ -18,10 +18,10 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, LOCAL, PREDICATE_ARGUMENT, PREMISE, ToposoidUtils}
-import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode, KnowledgeFeatureReference}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, ToposoidUtils}
+import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
@@ -56,7 +56,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
 
       analyzedSentenceObject.nodeMap.foldLeft(insertScript){
         (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang))
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.KnowledgeForImages))
         }
       }
 
@@ -80,7 +80,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String): StringBuilder = {
+  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage]): StringBuilder = {
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val insertScript= new StringBuilder
@@ -121,6 +121,16 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
 
+    //create ImageNode
+    knowledgeForImages.filter(x => {
+      x.imageReference.reference.surfaceIndex == node.predicateArgumentStructure.currentId && !x.imageReference.reference.isWholeSentence
+    }).foldLeft(insertScript){
+      (acc, x) => {
+          acc.append(createQueryForImageNode(node, sentenceType, x))
+      }
+    }
+
+    //create SynonymNode
     val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms")
     val synonymList: SynonymList = Json.parse(result).as[SynonymList]
     if (synonymList != null && synonymList.synonyms.size > 0) {
@@ -142,13 +152,34 @@ object QueryManagementForLocalNode  extends LazyLogging {
    */
   private def createQueryForSynonymNode(node: KnowledgeBaseNode, synonym: String, sentenceType: Int): StringBuilder = {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
+    val synonymNodeType:String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, SYNONYM.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:SynonymNode {nodeId:'%s', nodeName:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(synonym + "_" + node.nodeId, synonym, node.propositionId, node.sentenceId))
+    insertScript.append("|MERGE (:%s {nodeId:'%s', nodeName:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(synonymNodeType, synonym + "_" + node.nodeId, synonym, node.propositionId, node.sentenceId))
     insertScript.append("|UNION ALL\n")
-    insertScript.append("|MATCH (s:SynonymNode {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similarity:0.5}]->(d)\n".format(synonym + "_" + node.nodeId, nodeType, node.nodeId))
+    insertScript.append("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:SynonymEdge {similarity:0.5}]->(d)\n".format(synonymNodeType, synonym + "_" + node.nodeId, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")
     insertScript
   }
+
+  /**
+   *
+   * @param node
+   * @param synonym
+   * @param sentenceType
+   * @return
+   */
+  private def createQueryForImageNode(node: KnowledgeBaseNode, sentenceType: Int, knowledgeForImage:KnowledgeForImage): StringBuilder = {
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
+    val imageNodeType:String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, IMAGE.index)
+    val insertScript = new StringBuilder
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId))
+    insertScript.append("|UNION ALL\n")
+    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, node.nodeId))
+    insertScript.append("|UNION ALL\n")
+    insertScript
+  }
+
+
 
   /**
    * This function outputs a query for edges for createGraph function.
