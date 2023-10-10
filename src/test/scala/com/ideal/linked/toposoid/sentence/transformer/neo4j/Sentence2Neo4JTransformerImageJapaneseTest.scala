@@ -38,12 +38,12 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
   }
 
   "The list of local claim images" should "be properly registered in the knowledge database and searchable." in {
-    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "猫が", surfaceIndex = 0, isWholeSentence = false)
+    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "猫が", surfaceIndex = 0, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, weight = 128, height = 128)
     val featureId1 = UUID.random.toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
-    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "犬が", surfaceIndex = 0, isWholeSentence = false)
+    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "犬が", surfaceIndex = 0, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, weight = 128, height = 128)
     val featureId2 = UUID.random.toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
@@ -65,12 +65,12 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
   }
 
   "The list of local premise and claim images" should "be properly registered in the knowledge database and searchable." in {
-    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "猫が", surfaceIndex = 0, isWholeSentence = false)
+    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "猫が", surfaceIndex = 0, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, weight = 128, height = 128)
     val featureId1 = UUID.random.toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
-    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "犬が", surfaceIndex = 0, isWholeSentence = false)
+    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "犬が", surfaceIndex = 0, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, weight = 128, height = 128)
     val featureId2 = UUID.random.toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
@@ -96,12 +96,12 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
 
   "The list of semi-global claim images" should "be properly registered in the knowledge database and searchable." in {
 
-    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true)
+    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, weight = 128, height = 128)
     val featureId1 = UUID.random.toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
-    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true)
+    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, weight = 128, height = 128)
     val featureId2 = UUID.random.toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
@@ -125,12 +125,12 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
 
   "The list of semi-global premise and claim images" should "be properly registered in the knowledge database and searchable." in {
 
-    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true)
+    val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, weight = 128, height = 128)
     val featureId1 = UUID.random.toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
-    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true)
+    val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, weight = 128, height = 128)
     val featureId2 = UUID.random.toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
