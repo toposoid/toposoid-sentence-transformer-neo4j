@@ -56,7 +56,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
 
       analyzedSentenceObject.nodeMap.foldLeft(insertScript){
         (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.KnowledgeForImages))
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages))
         }
       }
 

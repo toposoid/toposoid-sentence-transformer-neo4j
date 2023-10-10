@@ -39,7 +39,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       knowledgeForParser.knowledge.sentence,
       sentenceType,
       knowledgeForParser.knowledge.lang,
-      knowledgeForParser.knowledge.KnowledgeForImages
+      knowledgeForParser.knowledge.knowledgeForImages
     )
   }
 
