@@ -172,7 +172,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val imageNodeType:String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, IMAGE.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId))
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")
