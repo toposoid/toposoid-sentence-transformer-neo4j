@@ -123,7 +123,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
 
     //create ImageNode
     knowledgeForImages.filter(x => {
-      x.imageReference.reference.surfaceIndex == node.predicateArgumentStructure.currentId && !x.imageReference.reference.isWholeSentence
+      x.imageReference.reference.surfaceIndex == node.predicateArgumentStructure.currentId && x.imageReference.reference.surface == node.predicateArgumentStructure.surface && !x.imageReference.reference.isWholeSentence
     }).foldLeft(insertScript){
       (acc, x) => {
           acc.append(createQueryForImageNode(node, sentenceType, x))
