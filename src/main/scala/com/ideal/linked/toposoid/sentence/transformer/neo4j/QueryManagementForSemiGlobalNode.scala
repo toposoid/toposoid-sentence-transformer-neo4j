@@ -50,7 +50,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     //val knowledgeFeatureNode = KnowledgeFeatureNode(semiGlobalNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
     val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
-    insertScript.append("|MERGE (:%s {semiGlobalNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", knowledgeFeatureReference:'%s', lang:'%s'})\n".format(
+    insertScript.append("|MERGE (:%s {semiGlobalNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", knowledgeFeatureReferences:'%s', lang:'%s'})\n".format(
       nodeType,
       semiGlobalNodeId,
       propositionId,
