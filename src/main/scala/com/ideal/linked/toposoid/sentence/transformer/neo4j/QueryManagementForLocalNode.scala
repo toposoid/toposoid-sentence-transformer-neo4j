@@ -194,20 +194,20 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case PREMISE.index => "PremiseNode"
       case CLAIM.index => "ClaimNode"
     }
+    /*
     val edgeType: String = sentenceType match {
       case PREMISE.index => "PremiseEdge"
       case CLAIM.index => "ClaimEdge"
     }
-    insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:%s {dependType:'%s', caseName:'%s',logicType:'%s'}]->(d) \n").format(
+     */
+    insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:LocalEdge {dependType:'%s', caseName:'%s',logicType:'%s'}]->(d) \n").format(
       nodeType,
       edge.sourceId,
       nodeType,
       edge.destinationId,
-      edgeType,
       edge.dependType,
       edge.caseStr,
       edge.logicType,
-      lang,
     ))
     insertScript.append("|UNION ALL\n")
     insertScript
@@ -250,7 +250,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case _ => "ClaimNode"
     }
 
-    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.nodeId =~'%s.*' AND  d.nodeId =~'%s.*') AND ((s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT'))  MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
+    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.nodeId =~'%s.*' AND  d.nodeId =~'%s.*') AND ((s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT'))  MERGE (s)-[:LocalEdge {logicType:'%s'}]->(d) \n").format(
       sourceNodeType,
       destinationNodeType,
       sentenceIds(propositionRelation.sourceIndex),
