@@ -103,7 +103,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       case -1 => ToposoidUtils.getNodeType(CLAIM.index, SEMIGLOBAL.index, SENTENCE.index)
       case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
     }
-    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.semiGlobalNodeId =~'%s.*' AND  d.semiGlobalNodeId =~'%s.*') MERGE (s)-[:LogicEdge {operator:'%s'}]->(d) \n").format(
+    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.semiGlobalNodeId =~'%s.*' AND  d.semiGlobalNodeId =~'%s.*') MERGE (s)-[:SemiGlobalEdge {logicType:'%s'}]->(d) \n").format(
       sourceNodeType,
       destinationNodeType,
       sentenceIds(propositionRelation.sourceIndex),
