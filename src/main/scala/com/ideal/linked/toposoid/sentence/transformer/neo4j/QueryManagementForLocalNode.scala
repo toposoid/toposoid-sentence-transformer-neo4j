@@ -109,7 +109,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
       node.predicateArgumentStructure.normalizedNameYomi,
       node.predicateArgumentStructure.surfaceYomi,
       node.predicateArgumentStructure.modalityType,
-      node.predicateArgumentStructure.logicType,
+      node.predicateArgumentStructure.parallelType,
       convertList2Json(node.predicateArgumentStructure.morphemes),
       node.localContext.lang
     ))
@@ -200,14 +200,16 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case CLAIM.index => "ClaimEdge"
     }
      */
-    insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:LocalEdge {dependType:'%s', caseName:'%s',logicType:'%s'}]->(d) \n").format(
+    insertScript.append(("|MATCH (s:%s {nodeId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:LocalEdge {dependType:'%s', caseName:'%s', parallelType:'%s', hasInclusion:'%s', logicType:'%s'}]->(d) \n").format(
       nodeType,
       edge.sourceId,
       nodeType,
       edge.destinationId,
       edge.dependType,
       edge.caseStr,
-      edge.logicType,
+      edge.parallelType,
+      edge.hasInclusion,
+      edge.logicType
     ))
     insertScript.append("|UNION ALL\n")
     insertScript
@@ -250,7 +252,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case _ => "ClaimNode"
     }
 
-    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.nodeId =~'%s.*' AND  d.nodeId =~'%s.*') AND ((s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT'))  MERGE (s)-[:LocalEdge {logicType:'%s'}]->(d) \n").format(
+    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.nodeId =~'%s.*' AND  d.nodeId =~'%s.*') AND ((s.caseType = '文末'　AND　d.caseType = '文末') OR (s.caseType = 'ROOT'　AND　d.caseType = 'ROOT'))  MERGE (s)-[:LocalEdge {dependType:'-', caseName:'', parallelType:'-', hasInclusion:'false', logicType:'%s'}]->(d) \n").format(
       sourceNodeType,
       destinationNodeType,
       sentenceIds(propositionRelation.sourceIndex),
