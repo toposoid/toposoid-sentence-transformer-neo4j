@@ -11,7 +11,7 @@ services:
     image: toposoid-sentence-transformer-neo4j:0.5-SNAPSHOT
     tty: true
     environment:
-      - GRAPHDB_HOST=172.30.0.2
+      - TOPOSOID_GRAPHDB_HOST=172.30.0.2
       - TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST=172.30.0.4
       - TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT=9001
       - TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST=172.30.0.6
