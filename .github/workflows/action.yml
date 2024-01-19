@@ -22,8 +22,9 @@ jobs:
             cd ${GITHUB_WORKSPACE} && cd ../
             cd ./${{ env.PJ_REPO }}
             docker rm --force $(docker ps -a -q) > /dev/null 2>&1 && :
-            docker rmi --force $(docker images -q) > /dev/null 2>&1 && :
-            docker images
+            #docker rmi --force $(docker images -q) > /dev/null 2>&1 && :
+            docker rmi --force ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }}
+            docker images 
             docker system prune -f
             docker volume prune -f          
             docker build --build-arg TARGET_BRANCH=${{ env.PJ_BRANCH }} --tag ${{ env.PJ_REPO }}:${{ env.PJ_VERSION }} -f Dockerfile-workflow .
