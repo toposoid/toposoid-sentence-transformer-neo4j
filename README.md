@@ -7,11 +7,11 @@ Toposoid is a knowledge base construction platform.(see [Toposoid　Root Project
 [![Unit Test Action](https://github.com/toposoid/toposoid-sentence-transformer-neo4j/actions/workflows/action.yml/badge.svg?branch=main)](https://github.com/toposoid/toposoid-sentence-transformer-neo4j/actions/workflows/action.yml)
 
 ## Requirements
-Scala version 2.13.x,   
-Sbt version 1.9.0
-[KNP 4.19](https://nlp.ist.i.kyoto-u.ac.jp/?KNP)
+* Scala version 2.13.x,   
+* Sbt version 1.9.0
+* [KNP 4.19](https://nlp.ist.i.kyoto-u.ac.jp/?KNP)
 
-## Recommended environment
+## Recommended environment For Standalone
 * Required: at least 8GB of RAM
 * Required: 10G or higher　of HDD
 * The following microservices must be running
@@ -19,10 +19,10 @@ Sbt version 1.9.0
     * toposoid/toposoid-common-nlp-japanese-web
     * toposoid/toposoid-sentence-parser-english-web
     * toposoid/toposoid-common-nlp-english-web
-    * toposoid/corenlp:3.4.2-workflow
-    * neo4j:4.1.3
+    * toposoid/corenlp
+    * neo4j
 
-## Setup
+## Setup For Standalone
 sbt publishLocal
 
 ## Usage
