@@ -18,7 +18,7 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, ToposoidUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
@@ -35,7 +35,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def execute(knowledgeForParser: KnowledgeForParser, sentenceType: Int): Unit = {
+  def execute(knowledgeForParser: KnowledgeForParser, sentenceType: Int, transversalState:TransversalState): Unit = {
 
     val insertScript = new StringBuilder
     //Analyze everything as simple sentences as Claims, not just sentenceType
@@ -48,7 +48,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
 
-    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze")
+    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze", transversalState)
     val analyzedSentenceObjects: AnalyzedSentenceObjects = Json.parse(parseResult).as[AnalyzedSentenceObjects]
     //Since analyzedSentenceObjects is the analysis result of one sentence, it always has one AnalyzedSentenceObject
     if (analyzedSentenceObjects.analyzedSentenceObjects.size > 0) {
@@ -56,7 +56,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
 
       analyzedSentenceObject.nodeMap.foldLeft(insertScript){
         (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages))
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages, transversalState))
         }
       }
 
@@ -80,7 +80,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage]): StringBuilder = {
+  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage], transversalState:TransversalState): StringBuilder = {
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val insertScript= new StringBuilder
@@ -131,7 +131,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
     }
 
     //create SynonymNode
-    val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms")
+    val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms", transversalState)
     val synonymList: SynonymList = Json.parse(result).as[SynonymList]
     if (synonymList != null && synonymList.synonyms.size > 0) {
       synonymList.synonyms.foldLeft(insertScript){
