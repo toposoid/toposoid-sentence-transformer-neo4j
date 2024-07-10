@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, PREMISE}
+import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeSentenceSetForParser
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForLocalNode.{createLogicRelation, execute, executeForLogicRelation}
@@ -37,11 +37,11 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
    * @param knowledgeSentenceSet
    */
-  def createGraph(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser): Unit ={
+  def createGraph(knowledgeSentenceSetForParser:KnowledgeSentenceSetForParser,transversalState:TransversalState): Unit ={
 
     val insertScript = new StringBuilder
-    knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index))
-    knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index))
+    knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index, transversalState))
+    knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index, transversalState))
     knowledgeSentenceSetForParser.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index))
     knowledgeSentenceSetForParser.claimList.map(executeForSemiGlobalNode(_, CLAIM.index))
 

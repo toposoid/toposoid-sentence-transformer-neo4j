@@ -17,6 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
+import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import org.neo4j.driver.Result
@@ -25,6 +26,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import io.jvm.uuid.UUID
 
 class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll {
+
+  val transversalState:TransversalState = TransversalState(username="guest")
 
   before {
     Neo4JAccessor.delete()
@@ -41,7 +44,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of english sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", "{}", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US" ,"{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:LocalEdge]->(:ClaimNode{surface:\"\'s\"})<-[:LocalEdge]-(:ClaimNode{surface:'life'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'Seeing'})-[:LocalEdge]->(:ClaimNode{surface:'believing'})<-[:LocalEdge]-(:ClaimNode{surface:'is'}) RETURN x")
@@ -60,7 +63,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of multiple english sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life. Seeing is believing.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'That'})-[:LocalEdge]->(:ClaimNode{surface:\"\'s\"})<-[:LocalEdge]-(:ClaimNode{surface:'life'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'Seeing'})-[:LocalEdge]->(:ClaimNode{surface:'believing'})<-[:LocalEdge]-(:ClaimNode{surface:'is'}) RETURN x")
@@ -72,7 +75,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The List of english sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("If you can dream it, you can do it.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
     val result:Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode)-[*..]->(:ClaimNode{surface:'dream'})-[:LocalEdge]->(:ClaimNode{surface:'do'})<-[*..]-(:ClaimNode) RETURN x")
     assert(result.hasNext)
     val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:SemiGlobalClaimNode{sentence:'If you can dream it, you can do it.'}) RETURN x")
@@ -83,7 +86,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of english sentences with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
     //val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     //assert(result.hasNext)
     //val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText=~'.*\"dummy\".*' return x")
@@ -96,7 +99,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The short english sentence with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US","""{"id":"Test2"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("", "en_US","""{"id":"Test3"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
     //val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x")
     //assert(result.hasNext)
     //val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test2\"}' return x")
@@ -112,7 +115,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
 
   "The Empty knowledge" should "not fail" in {
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], List.empty[KnowledgeForParser], List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
   }
 
   "The List of Japanese Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
@@ -123,7 +126,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[KnowledgeForParser], List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
@@ -142,7 +145,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
     )
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'A'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ClaimNode{surface:'B'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'C'}) RETURN x")
@@ -164,7 +167,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("F's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser)
+    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
     val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x")
     assert(result.hasNext)
     val result2:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x")
