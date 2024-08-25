@@ -27,7 +27,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
 class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll {
 
-  val transversalState:TransversalState = TransversalState(username="guest")
+  val transversalState:TransversalState = TransversalState(userId="test-user", username="guest", roleId=0, csrfToken = "")
 
   before {
     Neo4JAccessor.delete()
