@@ -19,9 +19,10 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
+import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
-object TestUtils {
+object TestUtils extends LazyLogging {
   def deleteNeo4JAllData(transversalState:TransversalState): Unit = {
     val query = "MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r"
     val neo4JUtils = new Neo4JUtilsImpl()
