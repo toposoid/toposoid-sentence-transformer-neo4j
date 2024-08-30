@@ -17,7 +17,6 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
 import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
@@ -29,13 +28,14 @@ import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
 import scala.util.matching.Regex
-object QueryManagementForLocalNode  extends LazyLogging {
+object QueryManagementForLocalNode  extends LazyLogging{
+
 
   val re = "UNION ALL\n$".r
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def execute(knowledgeForParser: KnowledgeForParser, sentenceType: Int, transversalState:TransversalState): Unit = {
+  def execute(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
 
     val insertScript = new StringBuilder
     //Analyze everything as simple sentences as Claims, not just sentenceType
@@ -63,14 +63,14 @@ object QueryManagementForLocalNode  extends LazyLogging {
       //As a policy, first register the node.
       //Another option is to loop at the edge and register the node.
       //However, processing becomes complicated because duplicate nodes are created.
-      if (insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
+      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
       insertScript.clear()
       analyzedSentenceObject.edgeList.foldLeft(insertScript){
         (acc, x) => {
           acc.append(createQueryForEdge(x, knowledgeForParser.knowledge.lang, sentenceType))
         }
       }
-      if (insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
+      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
     }
   }
 
@@ -126,7 +126,7 @@ object QueryManagementForLocalNode  extends LazyLogging {
       x.imageReference.reference.surfaceIndex == node.predicateArgumentStructure.currentId && x.imageReference.reference.surface == node.predicateArgumentStructure.surface && !x.imageReference.reference.isWholeSentence
     }).foldLeft(insertScript){
       (acc, x) => {
-          acc.append(createQueryForImageNode(node, sentenceType, x))
+        acc.append(createQueryForImageNode(node, sentenceType, x))
       }
     }
 
@@ -264,4 +264,6 @@ object QueryManagementForLocalNode  extends LazyLogging {
     insertScript
   }
 
+
 }
+
