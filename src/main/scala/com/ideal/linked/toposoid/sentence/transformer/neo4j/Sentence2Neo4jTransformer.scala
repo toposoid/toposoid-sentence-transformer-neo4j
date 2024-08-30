@@ -16,8 +16,8 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, TransversalState}
+import com.ideal.linked.common.DeploymentConverter.conf
+import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeSentenceSetForParser
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForIndex.createIndex
@@ -32,7 +32,13 @@ trait Neo4JUtils {
 
 class Neo4JUtilsImpl extends Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit = {
-    Neo4JAccessor.executeQuery(query)
+
+    val convertQuery = ToposoidUtils.encodeJsonInJson(query)
+    val json = s"""{ "query":"$convertQuery", "target": "" }"""
+    val res = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "executeQuery", transversalState)
+    if (!res.equals("""{"status":"OK","message":""}""")) {
+      throw new Exception("Cypher query execution failed. " + res)
+    }
   }
 }
 
@@ -89,7 +95,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
         insertScript.append(createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
         insertScript.append(createSemiGlobalLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
       }
-      if (insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
+      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
 
       createIndex(neo4JUtils, transversalState)
   }
