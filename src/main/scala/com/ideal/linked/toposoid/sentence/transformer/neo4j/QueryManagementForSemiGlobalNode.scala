@@ -16,8 +16,7 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SEMIGLOBAL, SENTENCE, ToposoidUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SEMIGLOBAL, SENTENCE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseNode, KnowledgeFeatureReference}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeForParser
@@ -32,18 +31,20 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def executeForSemiGlobalNode(knowledgeForParser: KnowledgeForParser, sentenceType: Int): Unit = {
+  def executeForSemiGlobalNode(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     createQueryForSemiGlobalNode(
       knowledgeForParser.propositionId,
       knowledgeForParser.sentenceId,
       knowledgeForParser.knowledge.sentence,
       sentenceType,
       knowledgeForParser.knowledge.lang,
-      knowledgeForParser.knowledge.knowledgeForImages
+      knowledgeForParser.knowledge.knowledgeForImages,
+      neo4JUtils:Neo4JUtils,
+      transversalState:TransversalState
     )
   }
 
-  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage]): Unit = {
+  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     val insertScript = new StringBuilder
     val semiGlobalNodeId = sentenceId
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
@@ -69,7 +70,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       }
     }
 
-    if (insertScript.size != 0) Neo4JAccessor.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""))
+    if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
     insertScript.clear()
   }
 
