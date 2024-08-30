@@ -16,7 +16,6 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-
 import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords

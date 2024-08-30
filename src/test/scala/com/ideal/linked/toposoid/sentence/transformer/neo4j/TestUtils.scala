@@ -22,7 +22,7 @@ import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
-object TestUtils extends LazyLogging {
+object TestUtils {
   def deleteNeo4JAllData(transversalState:TransversalState): Unit = {
     val query = "MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r"
     val neo4JUtils = new Neo4JUtilsImpl()
