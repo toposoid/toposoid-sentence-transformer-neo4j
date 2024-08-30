@@ -9,7 +9,6 @@ lazy val root = (project in file("."))
     name := "toposoid-sentence-transformer-neo4j",
     libraryDependencies += scalaTest % Test,
     libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.6-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "scala-data-accessor-neo4j" % "0.6-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.6-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.6-SNAPSHOT",
     libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.6-SNAPSHOT",
