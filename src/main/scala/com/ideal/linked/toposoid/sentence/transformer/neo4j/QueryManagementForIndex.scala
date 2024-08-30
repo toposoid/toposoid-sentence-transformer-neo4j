@@ -17,8 +17,9 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common.TransversalState
+import com.typesafe.scalalogging.LazyLogging
 
-object QueryManagementForIndex {
+object QueryManagementForIndex extends LazyLogging{
   
   def createIndex(neo4JUtils:Neo4JUtils, transversalState: TransversalState): Unit = {
     //CREATE INDEX
