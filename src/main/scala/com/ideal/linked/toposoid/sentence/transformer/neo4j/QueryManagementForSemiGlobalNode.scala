@@ -19,7 +19,7 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SEMIGLOBAL, SENTENCE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseNode, KnowledgeFeatureReference}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
-import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeForParser
+import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, KnowledgeForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 
@@ -31,17 +31,20 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def executeForSemiGlobalNode(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
-    createQueryForSemiGlobalNode(
-      knowledgeForParser.propositionId,
-      knowledgeForParser.sentenceId,
-      knowledgeForParser.knowledge.sentence,
-      sentenceType,
-      knowledgeForParser.knowledge.lang,
-      knowledgeForParser.knowledge.knowledgeForImages,
-      neo4JUtils:Neo4JUtils,
-      transversalState:TransversalState
-    )
+  def executeForSemiGlobalNode(analyzedPropositionPair: AnalyzedPropositionPair, sentenceType:Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
+    val knowledgeForParser = analyzedPropositionPair.knowledgeForParser
+    if(analyzedPropositionPair.analyzedSentenceObjects.analyzedSentenceObjects.size > 0){
+      createQueryForSemiGlobalNode(
+        knowledgeForParser.propositionId,
+        knowledgeForParser.sentenceId,
+        knowledgeForParser.knowledge.sentence,
+        sentenceType,
+        knowledgeForParser.knowledge.lang,
+        knowledgeForParser.knowledge.knowledgeForImages,
+        neo4JUtils: Neo4JUtils,
+        transversalState: TransversalState
+      )
+    }
   }
 
   private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {

@@ -21,6 +21,7 @@ import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeSentenceSet, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtils.getAnalyzedPropositionSet
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 import io.jvm.uuid.UUID
@@ -47,7 +48,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of english sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", "{}", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US" ,"{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'That'})-[:LocalEdge]->(:ClaimNode{surface:"\\'s"})<-[:LocalEdge]-(:ClaimNode{surface:'life'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
     val result2: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Seeing'})-[:LocalEdge]->(:ClaimNode{surface:'believing'})<-[:LocalEdge]-(:ClaimNode{surface:'is'}) RETURN x""", transversalState)
@@ -66,7 +67,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of multiple english sentences" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life. Seeing is believing.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'That'})-[:LocalEdge]->(:ClaimNode{surface:"\\'s"})<-[:LocalEdge]-(:ClaimNode{surface:'life'}) RETURN x""",  transversalState)
     assert(result.records.size == 1)
@@ -79,7 +80,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The List of english sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("If you can dream it, you can do it.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     val result:Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode)-[*..]->(:ClaimNode{surface:'dream'})-[:LocalEdge]->(:ClaimNode{surface:'do'})<-[*..]-(:ClaimNode) RETURN x""",  transversalState)
     assert(result.records.size >= 1)
     val result2: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'If you can dream it, you can do it.'}) RETURN x""",  transversalState)
@@ -90,7 +91,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The list of english sentences with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     //val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x""",  transversalState)
     //assert(result.records.size == 1)
     //val result2:Result =Neo4JAccessor.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText=~'.*\"dummy\".*' return x""",  transversalState)
@@ -103,7 +104,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   "The short english sentence with json" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US","""{"id":"Test2"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("", "en_US","""{"id":"Test3"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     //val neo4jRecords1: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x""",  transversalState)
     //assert(result.records.size == 1)
     //val result2:Result =Neo4JAccessor.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test2\"}' return x""",  transversalState)
@@ -119,7 +120,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
 
   "The Empty knowledge" should "not fail" in {
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], List.empty[KnowledgeForParser], List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
   }
 
   "The List of Japanese Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
@@ -130,7 +131,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[KnowledgeForParser], List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x""",  transversalState)
     assert(result.records.size == 1)
     val result2: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x""",  transversalState)
@@ -149,7 +150,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
     )
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'A'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'B'}) RETURN x""",  transversalState)
     assert(result.records.size == 1)
     val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'B'})-[*]->(:ClaimNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:ClaimNode{surface:'is',isDenialWord:'true'})<-[*]-(:ClaimNode{surface:'C'}) RETURN x""",  transversalState)
@@ -171,7 +172,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
         KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("F's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
-    Sentence2Neo4jTransformer.createGraph(knowledgeSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'A'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'AND'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'B'}) RETURN x""",  transversalState)
     assert(result.records.size == 1)
     val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'B'})-[*]->(:PremiseNode{surface:'is',isDenialWord:'true'})-[:LocalEdge{logicType:'OR'}]->(:PremiseNode{surface:'is',isDenialWord:'true'})<-[*]-(:PremiseNode{surface:'C'}) RETURN x""",  transversalState)

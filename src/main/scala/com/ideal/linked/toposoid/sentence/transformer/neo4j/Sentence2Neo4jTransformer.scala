@@ -19,11 +19,13 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
-import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeSentenceSetForParser
+import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
+import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForIndex.createIndex
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForLocalNode.{createLogicRelation, execute, executeForLogicRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForSemiGlobalNode.{createSemiGlobalLogicRelation, executeForSemiGlobalLogicRelation, executeForSemiGlobalNode}
 import com.typesafe.scalalogging.LazyLogging
+import play.api.libs.json.{Json, OWrites, Reads}
 
 
 trait Neo4JUtils {
@@ -42,6 +44,16 @@ class Neo4JUtilsImpl extends Neo4JUtils {
   }
 }
 
+
+case class AnalyzedPropositionSet(premiseList:List[AnalyzedPropositionPair],premiseLogicRelation:List[PropositionRelation], claimList:List[AnalyzedPropositionPair], claimLogicRelation:List[PropositionRelation])
+object AnalyzedPropositionSet {
+  implicit val jsonWrites: OWrites[AnalyzedPropositionSet] = Json.writes[AnalyzedPropositionSet]
+  implicit val jsonReads: Reads[AnalyzedPropositionSet] = Json.reads[AnalyzedPropositionSet]
+}
+
+
+
+
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.
  * Use Neo4J as the knowledge database.
@@ -56,7 +68,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    * @param propositionId Sentences in knowledgeSentenceSet have the same propositionId
    * @param knowledgeSentenceSet
    */
-  def createGraph(knowledgeSentenceSetForParser: KnowledgeSentenceSetForParser, transversalState: TransversalState, neo4JUtilsObject :Neo4JUtils=null): Unit = {
+  def createGraph(analyzedPropositionSet:AnalyzedPropositionSet, transversalState: TransversalState, neo4JUtilsObject :Neo4JUtils=null): Unit = {
 
       val neo4JUtils = Option(neo4JUtilsObject) match {
         case Some(x) => x
@@ -64,27 +76,27 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       }
 
       val insertScript = new StringBuilder
-      knowledgeSentenceSetForParser.premiseList.map(execute(_, PREMISE.index, neo4JUtils, transversalState))
-      knowledgeSentenceSetForParser.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
-      knowledgeSentenceSetForParser.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
-      knowledgeSentenceSetForParser.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
+      analyzedPropositionSet.premiseList.map(execute(_, PREMISE.index, neo4JUtils, transversalState))
+      analyzedPropositionSet.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
+      analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
+      analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
 
       //Get a list of sentenceIds for Premise and Claim respectively
-      val premiseSentenceIds = knowledgeSentenceSetForParser.premiseList.map(_.sentenceId)
-      val claimSentenceIds = knowledgeSentenceSetForParser.claimList.map(_.sentenceId)
+      val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
+      val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
 
       insertScript.clear()
       //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
       //if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
       if (premiseSentenceIds.size > 1) {
-        insertScript.append(executeForLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index))
-        insertScript.append(executeForSemiGlobalLogicRelation(premiseSentenceIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index))
+        insertScript.append(executeForLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, PREMISE.index))
+        insertScript.append(executeForSemiGlobalLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, PREMISE.index))
       }
 
       //If the target proposition has multiple Claims, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
       if (claimSentenceIds.size > 1) {
-        insertScript.append(executeForLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index))
-        insertScript.append(executeForSemiGlobalLogicRelation(claimSentenceIds, knowledgeSentenceSetForParser.claimLogicRelation, CLAIM.index))
+        insertScript.append(executeForLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, CLAIM.index))
+        insertScript.append(executeForSemiGlobalLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, CLAIM.index))
       }
 
       //If the target proposition has both Premise and CLaim,

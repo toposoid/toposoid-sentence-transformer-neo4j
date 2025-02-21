@@ -20,6 +20,7 @@ import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtils.getAnalyzedPropositionSet
 import io.jvm.uuid.UUID
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -58,7 +59,7 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser,transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState),transversalState)
 
     val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'cats'}) RETURN x """, transversalState)
      assert(result.records.size == 1)
@@ -87,7 +88,7 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser,transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState),transversalState)
 
     val result:  Neo4jRecords =  TestUtils.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:PremiseNode{surface:'cats'}) RETURN x """, transversalState)
      assert(result.records.size == 1)
@@ -116,7 +117,7 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
     val result:  Neo4jRecords =  TestUtils.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'There are two cats.'}) RETURN x """, transversalState)
      assert(result.records.size == 1)
@@ -147,7 +148,7 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser, transversalState)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
 
     val result:  Neo4jRecords =  TestUtils.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalPremiseNode{sentence:'There are two cats.'}) RETURN x """, transversalState)
