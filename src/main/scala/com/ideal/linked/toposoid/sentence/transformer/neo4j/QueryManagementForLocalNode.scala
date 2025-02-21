@@ -21,8 +21,8 @@ import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
-import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
-import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, AnalyzedSentenceObjects}
+import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, InputSentenceForParser, KnowledgeForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
@@ -35,7 +35,37 @@ object QueryManagementForLocalNode  extends LazyLogging{
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
 
-  def execute(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
+  def execute(analyzedPropositionPair: AnalyzedPropositionPair, sentenceType:Int, neo4JUtils: Neo4JUtils, transversalState: TransversalState): Unit = {
+
+    val insertScript = new StringBuilder
+    val analyzedSentenceObjects = analyzedPropositionPair.analyzedSentenceObjects.analyzedSentenceObjects
+    val knowledgeForParser = analyzedPropositionPair.knowledgeForParser
+    //Analyze everything as simple sentences as Claims, not just sentenceType
+    //Since analyzedSentenceObjects is the analysis result of one sentence, it always has one AnalyzedSentenceObject
+    if (analyzedSentenceObjects.size > 0) {
+      val analyzedSentenceObject = analyzedSentenceObjects.head
+      analyzedSentenceObject.nodeMap.foldLeft(insertScript) {
+        (acc, x) => {
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages, transversalState))
+        }
+      }
+
+      //As a policy, first register the node.
+      //Another option is to loop at the edge and register the node.
+      //However, processing becomes complicated because duplicate nodes are created.
+      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
+      insertScript.clear()
+      analyzedSentenceObject.edgeList.foldLeft(insertScript) {
+        (acc, x) => {
+          acc.append(createQueryForEdge(x, knowledgeForParser.knowledge.lang, sentenceType))
+        }
+      }
+      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
+    }
+  }
+
+  /*
+  def execute2(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
 
     val insertScript = new StringBuilder
     //Analyze everything as simple sentences as Claims, not just sentenceType
@@ -73,7 +103,7 @@ object QueryManagementForLocalNode  extends LazyLogging{
       if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
     }
   }
-
+  */
   /**
    * 　This function outputs a query for nodes other than synonyms.
    *
