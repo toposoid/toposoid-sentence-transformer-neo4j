@@ -20,7 +20,7 @@ import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
-import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
 import play.api.libs.json.Json
 
 import scala.util.matching.Regex
