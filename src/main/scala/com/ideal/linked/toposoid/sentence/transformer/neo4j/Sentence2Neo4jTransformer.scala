@@ -20,7 +20,7 @@ import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
-import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.protocol.model.parser.{ KnowledgeForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForIndex.createIndex
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForLocalNode.{createLogicRelation, execute, executeForLogicRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForSemiGlobalNode.{createSemiGlobalLogicRelation, executeForSemiGlobalLogicRelation, executeForSemiGlobalNode}
@@ -30,6 +30,19 @@ import play.api.libs.json.{Json, OWrites, Reads}
 
 trait Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit
+}
+
+case class AnalyzedPropositionPair(analyzedSentenceObjects: AnalyzedSentenceObjects ,knowledgeForParser: KnowledgeForParser)
+object AnalyzedPropositionPair {
+  implicit val jsonWrites: OWrites[AnalyzedPropositionPair] = Json.writes[AnalyzedPropositionPair]
+  implicit val jsonReads: Reads[AnalyzedPropositionPair] = Json.reads[AnalyzedPropositionPair]
+}
+
+
+case class AnalyzedPropositionSet(premiseList:List[AnalyzedPropositionPair],premiseLogicRelation:List[PropositionRelation], claimList:List[AnalyzedPropositionPair], claimLogicRelation:List[PropositionRelation])
+object AnalyzedPropositionSet {
+  implicit val jsonWrites: OWrites[AnalyzedPropositionSet] = Json.writes[AnalyzedPropositionSet]
+  implicit val jsonReads: Reads[AnalyzedPropositionSet] = Json.reads[AnalyzedPropositionSet]
 }
 
 class Neo4JUtilsImpl extends Neo4JUtils {
@@ -43,16 +56,6 @@ class Neo4JUtilsImpl extends Neo4JUtils {
     }
   }
 }
-
-
-case class AnalyzedPropositionSet(premiseList:List[AnalyzedPropositionPair],premiseLogicRelation:List[PropositionRelation], claimList:List[AnalyzedPropositionPair], claimLogicRelation:List[PropositionRelation])
-object AnalyzedPropositionSet {
-  implicit val jsonWrites: OWrites[AnalyzedPropositionSet] = Json.writes[AnalyzedPropositionSet]
-  implicit val jsonReads: Reads[AnalyzedPropositionSet] = Json.reads[AnalyzedPropositionSet]
-}
-
-
-
 
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.

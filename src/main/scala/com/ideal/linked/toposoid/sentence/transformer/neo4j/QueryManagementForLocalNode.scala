@@ -21,8 +21,6 @@ import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
-import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObject, AnalyzedSentenceObjects}
-import com.ideal.linked.toposoid.protocol.model.parser.{AnalyzedPropositionPair, InputSentenceForParser, KnowledgeForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
