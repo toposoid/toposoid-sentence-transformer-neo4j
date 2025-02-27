@@ -16,11 +16,12 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREMISE, SEMIGLOBAL, SENTENCE, ToposoidUtils, TransversalState}
-import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeFeatureReference}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREMISE, SEMIGLOBAL, SENTENCE, TABLE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
+
 import scala.util.matching.Regex
 
 
@@ -40,13 +41,14 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
         sentenceType,
         knowledgeForParser.knowledge.lang,
         knowledgeForParser.knowledge.knowledgeForImages,
+        knowledgeForParser.knowledge.knowledgeForTables,
         neo4JUtils: Neo4JUtils,
         transversalState: TransversalState
       )
     }
   }
 
-  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
+  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], knowledgeForTables: List[KnowledgeForTable], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     val insertScript = new StringBuilder
     val semiGlobalNodeId = sentenceId
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
@@ -72,6 +74,15 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       }
     }
 
+    //Create TableNode
+    knowledgeForTables.filter(x => {
+      x.tableReference.reference.isWholeSentence
+    }).foldLeft(insertScript) {
+      (acc, x) => {
+        acc.append(createQueryForTableNode(semiGlobalNodeId, propositionId, sentenceId, sentenceType, x))
+      }
+    }
+
     if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
     insertScript.clear()
   }
@@ -86,6 +97,18 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     insertScript.append("|UNION ALL\n")
     insertScript
   }
+
+  private def createQueryForTableNode(semiGlobalNodeId: String, propositionId: String, sentenceId: String, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
+    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, TABLE.index)
+    val insertScript = new StringBuilder
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
+    insertScript.append("|UNION ALL\n")
+    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {semiGlobalNodeId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, semiGlobalNodeId))
+    insertScript.append("|UNION ALL\n")
+    insertScript
+  }
+
 
   def executeForSemiGlobalLogicRelation(sentenceIds: List[String], propositionRelations: List[PropositionRelation], sentenceType: Int): StringBuilder = {
     propositionRelations.foldLeft(new StringBuilder) {
