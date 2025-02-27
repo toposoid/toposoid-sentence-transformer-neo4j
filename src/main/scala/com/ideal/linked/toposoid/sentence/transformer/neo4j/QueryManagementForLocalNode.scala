@@ -17,10 +17,10 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, TABLE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, PropositionRelation}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
@@ -44,7 +44,7 @@ object QueryManagementForLocalNode  extends LazyLogging{
       val analyzedSentenceObject = analyzedSentenceObjects.head
       analyzedSentenceObject.nodeMap.foldLeft(insertScript) {
         (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages, transversalState))
+          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages, knowledgeForParser.knowledge.knowledgeForTables, transversalState))
         }
       }
 
@@ -62,53 +62,14 @@ object QueryManagementForLocalNode  extends LazyLogging{
     }
   }
 
-  /*
-  def execute2(knowledgeForParser: KnowledgeForParser, sentenceType: Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
 
-    val insertScript = new StringBuilder
-    //Analyze everything as simple sentences as Claims, not just sentenceType
-    val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
-    val json: String = Json.toJson(inputSentenceForParser).toString()
-
-    val parserInfo: (String, String) = knowledgeForParser.knowledge.lang match {
-      case langPatternJP() => (conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT"))
-      case langPatternEN() => (conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT"))
-      case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
-    }
-
-    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze", transversalState)
-    val analyzedSentenceObjects: AnalyzedSentenceObjects = Json.parse(parseResult).as[AnalyzedSentenceObjects]
-    //Since analyzedSentenceObjects is the analysis result of one sentence, it always has one AnalyzedSentenceObject
-    if (analyzedSentenceObjects.analyzedSentenceObjects.size > 0) {
-      val analyzedSentenceObject = analyzedSentenceObjects.analyzedSentenceObjects.head
-
-      analyzedSentenceObject.nodeMap.foldLeft(insertScript){
-        (acc, x) => {
-          acc.append(createQueryForNode(x._2, sentenceType, knowledgeForParser.knowledge.lang, knowledgeForParser.knowledge.knowledgeForImages, transversalState))
-        }
-      }
-
-      //As a policy, first register the node.
-      //Another option is to loop at the edge and register the node.
-      //However, processing becomes complicated because duplicate nodes are created.
-      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
-      insertScript.clear()
-      analyzedSentenceObject.edgeList.foldLeft(insertScript){
-        (acc, x) => {
-          acc.append(createQueryForEdge(x, knowledgeForParser.knowledge.lang, sentenceType))
-        }
-      }
-      if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
-    }
-  }
-  */
   /**
    * 　This function outputs a query for nodes other than synonyms.
    *
    * @param node
    * @param sentenceType
    */
-  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage], transversalState:TransversalState): StringBuilder = {
+  private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage], knowledgeForTables: List[KnowledgeForTable], transversalState:TransversalState): StringBuilder = {
 
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
     val insertScript= new StringBuilder
@@ -155,6 +116,15 @@ object QueryManagementForLocalNode  extends LazyLogging{
     }).foldLeft(insertScript){
       (acc, x) => {
         acc.append(createQueryForImageNode(node, sentenceType, x))
+      }
+    }
+
+    //create TableNode
+    knowledgeForTables.filter(x => {
+      x.tableReference.reference.surfaceIndex == node.predicateArgumentStructure.currentId && x.tableReference.reference.surface == node.predicateArgumentStructure.surface && !x.tableReference.reference.isWholeSentence
+    }).foldLeft(insertScript) {
+      (acc, x) => {
+        acc.append(createQueryForTableNode(node, sentenceType, x))
       }
     }
 
@@ -207,6 +177,16 @@ object QueryManagementForLocalNode  extends LazyLogging{
     insertScript
   }
 
+  private def createQueryForTableNode(node: KnowledgeBaseNode, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
+    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, TABLE.index)
+    val insertScript = new StringBuilder
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, node.propositionId, node.sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
+    insertScript.append("|UNION ALL\n")
+    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, node.nodeId))
+    insertScript.append("|UNION ALL\n")
+    insertScript
+  }
 
 
   /**
