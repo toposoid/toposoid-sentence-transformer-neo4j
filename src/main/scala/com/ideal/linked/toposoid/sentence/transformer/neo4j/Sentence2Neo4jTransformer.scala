@@ -92,9 +92,10 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
       analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
 
-      val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
-
-      executeForGlobalNode(knowledgeForDocumentRep, neo4JUtils, transversalState)
+      if(analyzedPropositionSet.claimList.size > 0) {
+        val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
+        executeForGlobalNode(knowledgeForDocumentRep, neo4JUtils, transversalState)
+      }
 
       //Get a list of sentenceIds for Premise and Claim respectively
       val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
