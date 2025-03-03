@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common.TransversalState
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{Knowledge, KnowledgeForImage, PropositionRelation}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{DocumentPageReference, Knowledge, KnowledgeForDocument, KnowledgeForImage, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtils.getAnalyzedPropositionSet
@@ -186,6 +186,19 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
 
 
   }
-  
+
+  "The list of japanese sentences with documentId" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeForDocument = KnowledgeForDocument(id=UUID.random.toString, filename = "TEST.pdf", url = "http://hoge/TEST.pdf", titleOfTopPage = "TextTitle")
+    val documentPageReference1 =  DocumentPageReference(pageNo = 1, references = List.empty[String], tableOfContents = List.empty[String])
+    val documentPageReference2 =  DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String])
+    val knowledgeList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("太郎は映画を見た。", "ja_JP", "{}", false, knowledgeForDocument=knowledgeForDocument, documentPageReference = documentPageReference1)),
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("花子の趣味はガーデニングです。", "ja_JP", "{}", false, knowledgeForDocument=knowledgeForDocument, documentPageReference = documentPageReference2)))
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
+    val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:GlobalNode{filename:'TEST.pdf'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
+  }
+
 }
 

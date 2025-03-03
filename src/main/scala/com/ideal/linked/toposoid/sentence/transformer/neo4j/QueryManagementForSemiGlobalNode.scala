@@ -22,6 +22,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, 
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.Option
 import scala.util.matching.Regex
 
 
@@ -34,9 +35,11 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
   def executeForSemiGlobalNode(analyzedPropositionPair: AnalyzedPropositionPair, sentenceType:Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     val knowledgeForParser = analyzedPropositionPair.knowledgeForParser
     if(analyzedPropositionPair.analyzedSentenceObjects.analyzedSentenceObjects.size > 0){
+
       createQueryForSemiGlobalNode(
         knowledgeForParser.propositionId,
         knowledgeForParser.sentenceId,
+        knowledgeForParser.knowledge.knowledgeForDocument.id,
         knowledgeForParser.knowledge.sentence,
         sentenceType,
         knowledgeForParser.knowledge.lang,
@@ -48,18 +51,18 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     }
   }
 
-  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], knowledgeForTables: List[KnowledgeForTable], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
+  private def createQueryForSemiGlobalNode(propositionId: String, sentenceId: String, documentId: String, sentence: String, sentenceType: Int, lang: String, knowledgeForImages: List[KnowledgeForImage], knowledgeForTables: List[KnowledgeForTable], neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     val insertScript = new StringBuilder
     val semiGlobalNodeId = sentenceId
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
     //val knowledgeFeatureNode = KnowledgeFeatureNode(semiGlobalNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
     val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
-    insertScript.append("|MERGE (:%s {semiGlobalNodeId:'%s', propositionId:'%s', sentenceId:'%s', sentence:\"%s\", knowledgeFeatureReferences:'%s', lang:'%s'})\n".format(
+    insertScript.append("|MERGE (:%s {sentenceId:'%s', propositionId:'%s', documentId:'%s', sentence:\"%s\", knowledgeFeatureReferences:'%s', lang:'%s'})\n".format(
       nodeType,
-      semiGlobalNodeId,
-      propositionId,
       sentenceId,
+      propositionId,
+      documentId,
       sentence,
       knowledgeFeatureReference,
       lang
