@@ -20,16 +20,19 @@ import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
-import com.ideal.linked.toposoid.protocol.model.parser.{ KnowledgeForParser}
+import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
+import com.ideal.linked.toposoid.protocol.model.parser.KnowledgeForParser
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForIndex.createIndex
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForLocalNode.{createLogicRelation, execute, executeForLogicRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForSemiGlobalNode.{createSemiGlobalLogicRelation, executeForSemiGlobalLogicRelation, executeForSemiGlobalNode}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForGlobalNode.executeForGlobalNode
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.{Json, OWrites, Reads}
 
 
 trait Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit
+  def executeQueryAndReturn(query: String, transversalState: TransversalState): Neo4jRecords
 }
 
 case class AnalyzedPropositionPair(analyzedSentenceObjects: AnalyzedSentenceObjects ,knowledgeForParser: KnowledgeForParser)
@@ -47,13 +50,18 @@ object AnalyzedPropositionSet {
 
 class Neo4JUtilsImpl extends Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit = {
-
     val convertQuery = ToposoidUtils.encodeJsonInJson(query)
     val json = s"""{ "query":"$convertQuery", "target": "" }"""
     val res = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "executeQuery", transversalState)
     if (!res.equals("""{"status":"OK","message":""}""")) {
       throw new Exception("Cypher query execution failed. " + res)
     }
+  }
+  def executeQueryAndReturn(query: String, transversalState: TransversalState): Neo4jRecords = {
+    val convertQuery = ToposoidUtils.encodeJsonInJson(query)
+    val json = s"""{ "query":"$convertQuery", "target": "" }"""
+    val jsonResult = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "getQueryFormattedResult", transversalState)
+    Json.parse(jsonResult).as[Neo4jRecords]
   }
 }
 
@@ -83,6 +91,10 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       analyzedPropositionSet.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
       analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
       analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
+
+      val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
+
+      executeForGlobalNode(knowledgeForDocumentRep, neo4JUtils, transversalState)
 
       //Get a list of sentenceIds for Premise and Claim respectively
       val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
