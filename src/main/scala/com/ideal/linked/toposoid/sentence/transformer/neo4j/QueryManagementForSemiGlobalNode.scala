@@ -73,7 +73,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       x.imageReference.reference.isWholeSentence
     }).foldLeft(insertScript) {
       (acc, x) => {
-        acc.append(createQueryForImageNode(semiGlobalNodeId, propositionId, sentenceId, sentenceType, x))
+        acc.append(createQueryForImageNode(propositionId, sentenceId, sentenceType, x))
       }
     }
 
@@ -82,7 +82,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       x.tableReference.reference.isWholeSentence
     }).foldLeft(insertScript) {
       (acc, x) => {
-        acc.append(createQueryForTableNode(semiGlobalNodeId, propositionId, sentenceId, sentenceType, x))
+        acc.append(createQueryForTableNode(propositionId, sentenceId, sentenceType, x))
       }
     }
 
@@ -90,24 +90,24 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     insertScript.clear()
   }
 
-  private def createQueryForImageNode(semiGlobalNodeId: String, propositionId:String, sentenceId:String, sentenceType: Int, knowledgeForImage: KnowledgeForImage): StringBuilder = {
+  private def createQueryForImageNode(propositionId:String, sentenceId:String, sentenceType: Int, knowledgeForImage: KnowledgeForImage): StringBuilder = {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
     val imageNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, IMAGE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, propositionId, sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
-    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {semiGlobalNodeId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, semiGlobalNodeId))
+    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {sentenceId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, sentenceId))
     insertScript.append("|UNION ALL\n")
     insertScript
   }
 
-  private def createQueryForTableNode(semiGlobalNodeId: String, propositionId: String, sentenceId: String, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
+  private def createQueryForTableNode(propositionId: String, sentenceId: String, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
     val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, TABLE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
-    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {semiGlobalNodeId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, semiGlobalNodeId))
+    insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {sentenceId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, sentenceId))
     insertScript.append("|UNION ALL\n")
     insertScript
   }
@@ -132,7 +132,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       case -1 => ToposoidUtils.getNodeType(CLAIM.index, SEMIGLOBAL.index, SENTENCE.index)
       case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
     }
-    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.semiGlobalNodeId =~'%s.*' AND  d.semiGlobalNodeId =~'%s.*') MERGE (s)-[:SemiGlobalEdge {logicType:'%s'}]->(d) \n").format(
+    insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.sentenceId =~'%s.*' AND  d.sentenceId =~'%s.*') MERGE (s)-[:SemiGlobalEdge {logicType:'%s'}]->(d) \n").format(
       sourceNodeType,
       destinationNodeType,
       sentenceIds(propositionRelation.sourceIndex),
