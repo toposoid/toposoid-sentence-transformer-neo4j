@@ -194,8 +194,8 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
 
   "The list of English sentences with documentId" should "be properly registered in the knowledge database and searchable." in {
     val knowledgeForDocument = KnowledgeForDocument(id = UUID.random.toString, filename = "TEST.pdf", url = "http://hoge/TEST.pdf", titleOfTopPage = "TextTitle")
-    val documentPageReference1 = DocumentPageReference(pageNo = 1, references = List.empty[String], tableOfContents = List.empty[String])
-    val documentPageReference2 = DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String])
+    val documentPageReference1 = DocumentPageReference(pageNo = 1, references = List.empty[String], tableOfContents = List.empty[String], headlines = List.empty[String])
+    val documentPageReference2 = DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String], headlines = List.empty[String])
     val knowledgeList = List(
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference2)))
