@@ -98,10 +98,21 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       }
 
       //Get a list of sentenceIds for Premise and Claim respectively
-      val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
-      val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
+      //val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
+      //val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
 
-      insertScript.clear()
+    val premiseSentences = analyzedPropositionSet.premiseList.filter(x => x.analyzedSentenceObjects.analyzedSentenceObjects.filter(y => y.nodeMap.filter(z => {
+      val pas = z._2.predicateArgumentStructure
+       (!pas.surface.startsWith("ＮＯ＿ＲＥＦＦＥＲＥＮＣＥ＿") && pas.caseType.equals("文末")) || (!pas.surface.startsWith("NO_REFFERENCE_") && pas.caseType.equals("ROOT"))
+    }).size > 0).size > 0)
+    val claimSentences = analyzedPropositionSet.claimList.filter(x => x.analyzedSentenceObjects.analyzedSentenceObjects.filter(y => y.nodeMap.filter(z => {
+      val pas = z._2.predicateArgumentStructure
+      (!pas.surface.startsWith("ＮＯ＿ＲＥＦＦＥＲＥＮＣＥ＿") && pas.caseType.equals("文末")) || (!pas.surface.startsWith("NO_REFFERENCE_") && pas.caseType.equals("ROOT"))
+    }).size > 0).size > 0)
+    val premiseSentenceIds = premiseSentences.map(_.knowledgeForParser.sentenceId)
+    val claimSentenceIds = claimSentences.map(_.knowledgeForParser.sentenceId)
+
+    insertScript.clear()
       //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
       //if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
       if (premiseSentenceIds.size > 1) {
@@ -120,8 +131,8 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       // The representative is the node with the 0th INDEX.
       if (premiseSentenceIds.size > 0 && claimSentenceIds.size > 0) {
         val propositionRelation = PropositionRelation("IMP", 0, 1)
-        insertScript.append(createLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
-        insertScript.append(createSemiGlobalLogicRelation(List(premiseSentenceIds(0), claimSentenceIds(0)), propositionRelation, -1))
+        insertScript.append(createLogicRelation(List(premiseSentenceIds.head, claimSentenceIds.head), propositionRelation, -1))
+        insertScript.append(createSemiGlobalLogicRelation(List(premiseSentenceIds.head, claimSentenceIds.head), propositionRelation, -1))
       }
       if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
 
