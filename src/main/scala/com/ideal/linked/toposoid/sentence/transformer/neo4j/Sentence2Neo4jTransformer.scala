@@ -29,6 +29,8 @@ import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementForGl
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.{Json, OWrites, Reads}
 
+import scala.util.matching.Regex
+
 
 trait Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit
@@ -101,14 +103,13 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       //val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
       //val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
 
+    val noReferenceRegex:Regex = "^(NO_REFERENCE)_.+_[0-9]+$".r
     val premiseSentences = analyzedPropositionSet.premiseList.filter(x => x.analyzedSentenceObjects.analyzedSentenceObjects.filter(y => y.nodeMap.filter(z => {
       val pas = z._2.predicateArgumentStructure
-       (!pas.surface.startsWith("ＮＯ＿ＲＥＦＦＥＲＥＮＣＥ＿") && pas.caseType.equals("文末")) || (!pas.surface.startsWith("NO_REFFERENCE_") && pas.caseType.equals("ROOT"))
-    }).size > 0).size > 0)
+      !noReferenceRegex.matches(pas.surface) && (pas.caseType.equals("文末") || pas.caseType.equals("ROOT"))}).size > 0).size > 0)
     val claimSentences = analyzedPropositionSet.claimList.filter(x => x.analyzedSentenceObjects.analyzedSentenceObjects.filter(y => y.nodeMap.filter(z => {
       val pas = z._2.predicateArgumentStructure
-      (!pas.surface.startsWith("ＮＯ＿ＲＥＦＦＥＲＥＮＣＥ＿") && pas.caseType.equals("文末")) || (!pas.surface.startsWith("NO_REFFERENCE_") && pas.caseType.equals("ROOT"))
-    }).size > 0).size > 0)
+      !noReferenceRegex.matches(pas.surface) && (pas.caseType.equals("文末") || pas.caseType.equals("ROOT"))}).size > 0).size > 0)
     val premiseSentenceIds = premiseSentences.map(_.knowledgeForParser.sentenceId)
     val claimSentenceIds = claimSentences.map(_.knowledgeForParser.sentenceId)
 
