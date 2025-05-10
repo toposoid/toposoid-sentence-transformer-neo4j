@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{CLAIM, PREMISE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{CLAIM, Neo4JUtils, Neo4JUtilsImpl, PREMISE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
@@ -32,11 +32,12 @@ import play.api.libs.json.{Json, OWrites, Reads}
 import scala.util.matching.Regex
 
 
+/*
 trait Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit
   def executeQueryAndReturn(query: String, transversalState: TransversalState): Neo4jRecords
 }
-
+*/
 case class AnalyzedPropositionPair(analyzedSentenceObjects: AnalyzedSentenceObjects ,knowledgeForParser: KnowledgeForParser)
 object AnalyzedPropositionPair {
   implicit val jsonWrites: OWrites[AnalyzedPropositionPair] = Json.writes[AnalyzedPropositionPair]
@@ -49,7 +50,7 @@ object AnalyzedPropositionSet {
   implicit val jsonWrites: OWrites[AnalyzedPropositionSet] = Json.writes[AnalyzedPropositionSet]
   implicit val jsonReads: Reads[AnalyzedPropositionSet] = Json.reads[AnalyzedPropositionSet]
 }
-
+/*
 class Neo4JUtilsImpl extends Neo4JUtils {
   def executeQuery(query: String, transversalState: TransversalState): Unit = {
     val convertQuery = ToposoidUtils.encodeJsonInJson(query)
@@ -66,7 +67,7 @@ class Neo4JUtilsImpl extends Neo4JUtils {
     Json.parse(jsonResult).as[Neo4jRecords]
   }
 }
-
+*/
 /**
  * The main implementation of this module is the conversion of predicate-argument-analyzed sentence structures into a knowledge graph.
  * Use Neo4J as the knowledge database.

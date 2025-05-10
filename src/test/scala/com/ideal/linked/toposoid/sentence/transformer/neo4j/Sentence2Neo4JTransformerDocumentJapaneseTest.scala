@@ -17,10 +17,10 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common.TransversalState
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{DocumentPageReference, KnowledgeForDocument, _}
+import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtils.getAnalyzedPropositionSet
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
 import io.jvm.uuid.UUID
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
@@ -30,15 +30,15 @@ class Sentence2Neo4JTransformerDocumentJapaneseTest extends AnyFlatSpec with Bef
   val transversalState: TransversalState = TransversalState(userId = "test-user", username = "guest", roleId = 0, csrfToken = "")
 
   before {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def beforeAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def afterAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
 
@@ -68,7 +68,7 @@ class Sentence2Neo4JTransformerDocumentJapaneseTest extends AnyFlatSpec with Bef
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
-    val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:GlobalNode {titleOfTopPage: 'テストタイトル', filename: 'test.pdf', url:'http://xxxx/test.pdf'}) RETURN x""", transversalState)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:GlobalNode {titleOfTopPage: 'テストタイトル', filename: 'test.pdf', url:'http://xxxx/test.pdf'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
   }
 }

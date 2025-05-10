@@ -20,7 +20,7 @@ import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{DocumentPageReference, Knowledge, KnowledgeForDocument, KnowledgeForImage, PropositionRelation}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtils.getAnalyzedPropositionSet
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 import io.jvm.uuid.UUID
@@ -30,15 +30,15 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
   val transversalState:TransversalState = TransversalState(userId="test-user", username="guest", roleId=0, csrfToken = "")
 
   before {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def beforeAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def afterAll(): Unit = {
-    TestUtils.deleteNeo4JAllData(transversalState)
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   
@@ -46,17 +46,17 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("太郎は映画を見た。", "ja_JP", "{}", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("花子の趣味はガーデニングです。", "ja_JP" ,"{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'太郎は'})-[:LocalEdge]->(:ClaimNode{surface:'見た。'})<-[:LocalEdge]-(:ClaimNode{surface:'映画を'}) RETURN x""", transversalState)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'太郎は'})-[:LocalEdge]->(:ClaimNode{surface:'見た。'})<-[:LocalEdge]-(:ClaimNode{surface:'映画を'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
-    val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'花子の'})-[:LocalEdge]->(:ClaimNode{surface:'趣味は'})-[:LocalEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x""", transversalState)
+    val result2:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'花子の'})-[:LocalEdge]->(:ClaimNode{surface:'趣味は'})-[:LocalEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3:Neo4jRecords = TestUtils.executeQueryAndReturn("""MAtCH x = (:SynonymNode{nodeName:'フィルム'})-[:SynonymEdge]->(:ClaimNode{surface:'映画を'}) return x""", transversalState)
+    val result3:Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MAtCH x = (:SynonymNode{nodeName:'フィルム'})-[:SynonymEdge]->(:ClaimNode{surface:'映画を'}) return x""", transversalState)
     assert(result3.records.size == 1)
-    val result4:Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'}) RETURN x""", transversalState)
+    val result4:Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'}) RETURN x""", transversalState)
     assert(result4.records.size == 1)
-    val result5: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x""", transversalState)
+    val result5: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x""", transversalState)
     assert(result5.records.size == 1)
-    val result6: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'})-[*]-(:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x""", transversalState)
+    val result6: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'太郎は映画を見た。'})-[*]-(:SemiGlobalClaimNode{sentence:'花子の趣味はガーデニングです。'}) RETURN x""", transversalState)
     assert(result6.records.size == 0)
   }
 
@@ -64,11 +64,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("二郎は映画を見た。明美の趣味はガーデニングです。", "ja_JP", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'二郎は'})-[:LocalEdge]->(:ClaimNode{surface:'見た。'})<-[:LocalEdge]-(:ClaimNode{surface:'映画を'}) RETURN x""", transversalState)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'二郎は'})-[:LocalEdge]->(:ClaimNode{surface:'見た。'})<-[:LocalEdge]-(:ClaimNode{surface:'映画を'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
-    val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'明美の'})-[:LocalEdge]->(:ClaimNode{surface:'趣味は'})-[:LocalEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x""", transversalState)
+    val result2:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'明美の'})-[:LocalEdge]->(:ClaimNode{surface:'趣味は'})-[:LocalEdge]->(:ClaimNode{surface:'ガーデニングです。'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'二郎は映画を見た。明美の趣味はガーデニングです。'}) RETURN x""", transversalState)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'二郎は映画を見た。明美の趣味はガーデニングです。'}) RETURN x""", transversalState)
     assert(result3.records.size == 1)
   }
 
@@ -76,9 +76,9 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("明日が雨ならば、三郎は映画を見るだろう。", "ja_JP", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'明日が'})-[:LocalEdge]->(:ClaimNode{surface:'雨ならば、'})-[:LocalEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x""", transversalState)
+    val result:Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'明日が'})-[:LocalEdge]->(:ClaimNode{surface:'雨ならば、'})-[:LocalEdge]->(:ClaimNode{surface:'見るだろう。'})<-[*]-(:ClaimNode) RETURN x""", transversalState)
     assert(result.records.size >= 1 )
-    val result2: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'明日が雨ならば、三郎は映画を見るだろう。'}) RETURN x""", transversalState)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'明日が雨ならば、三郎は映画を見るだろう。'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
 
   }
@@ -91,7 +91,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     //assert(result.records.size == 1)
     //val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"日本語\":\"大丈夫かテスト\"}' return x""", transversalState)
     //assert(result2.records.size == 1)
-    val result3: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'三郎は映画を見た。'})-[:SemiGlobalEdge{logicType:'AND'}]-(:SemiGlobalClaimNode{sentence:'明美の趣味はガーデニングです。'}) RETURN x""", transversalState)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'三郎は映画を見た。'})-[:SemiGlobalEdge{logicType:'AND'}]-(:SemiGlobalClaimNode{sentence:'明美の趣味はガーデニングです。'}) RETURN x""", transversalState)
     assert(result3.records.size == 1)
   }
 
@@ -105,9 +105,9 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     //assert(result2.records.size == 1)
     //val result3:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test3\"}' return x""", transversalState)
     //assert(!result3.records.size == 1)
-    val result4: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウスである。'}) RETURN x""", transversalState)
+    val result4: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウスである。'}) RETURN x""", transversalState)
     assert(result4.records.size == 1)
-    val result5: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウス'}) RETURN x""", transversalState)
+    val result5: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'セリヌンティウス'}) RETURN x""", transversalState)
     assert(result5.records.size == 1)
   }
 
@@ -125,11 +125,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[KnowledgeForParser], List.empty[PropositionRelation])
       Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｃは'})-[:LocalEdge]->(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｂは'}) RETURN x""", transversalState)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｃは'})-[:LocalEdge]->(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｂは'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
-    val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ａは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｃは'}) RETURN x""", transversalState)
+    val result2:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ａは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｃは'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
     assert(result3.records.size == 1)
 
 
@@ -145,11 +145,11 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
       )
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｃは'})-[:LocalEdge]->(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｂは'}) RETURN x""", transversalState)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｃは'})-[:LocalEdge]->(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｂは'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
-    val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ａは'})-[:LocalEdge]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｃは'}) RETURN x""", transversalState)
+    val result2:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ａは'})-[:LocalEdge]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｃは'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalClaimNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalClaimNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalClaimNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalClaimNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
     assert(result3.records.size == 1)
 
   }
@@ -167,21 +167,21 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
-    val result:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｃは'})-[:LocalEdge]->(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｂは'}) RETURN x""", transversalState)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｃは'})-[:LocalEdge]->(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge{logicType:'AND'}]-(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｂは'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
-    val result2:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ａは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｃは'}) RETURN x""", transversalState)
+    val result2:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ａは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})<-[:LocalEdge{logicType:'OR'}]-(:PremiseNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:PremiseNode{surface:'Ｃは'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｄは'})-[:LocalEdge]->(:ClaimNode{surface:'黒髪ではない。'})-[:LocalEdge{logicType:'OR'}]->(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｅは'}) RETURN x""", transversalState)
+    val result3:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｄは'})-[:LocalEdge]->(:ClaimNode{surface:'黒髪ではない。'})-[:LocalEdge{logicType:'OR'}]->(:ClaimNode{surface:'ブロンドではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｅは'}) RETURN x""", transversalState)
     assert(result3.records.size == 1)
-    val result4:Neo4jRecords =TestUtils.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｅは'})-[:LocalEdge]->(:ClaimNode{surface:'ブロンドではない。'})-[:LocalEdge{logicType:'AND'}]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｆは'}) RETURN x""", transversalState)
+    val result4:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Ｅは'})-[:LocalEdge]->(:ClaimNode{surface:'ブロンドではない。'})-[:LocalEdge{logicType:'AND'}]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｆは'}) RETURN x""", transversalState)
     assert(result4.records.size == 1)
-    val result5: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｂは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})-[:LocalEdge{logicType:'IMP'}]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｄは'}) RETURN x""", transversalState)
+    val result5: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:PremiseNode{surface:'Ｂは'})-[:LocalEdge]->(:PremiseNode{surface:'黒髪ではない。'})-[:LocalEdge{logicType:'IMP'}]->(:ClaimNode{surface:'黒髪ではない。'})<-[:LocalEdge]-(:ClaimNode{surface:'Ｄは'}) RETURN x""", transversalState)
     assert(result5.records.size == 1)
-    val result6: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
+    val result6: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalPremiseNode{sentence:'Cはブロンドではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalPremiseNode{sentence:'Aは黒髪ではない。'}) RETURN x""", transversalState)
     assert(result6.records.size == 1)
-    val result7: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalClaimNode{sentence:'Eはブロンドではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalClaimNode{sentence:'Fは黒髪ではない。'}) RETURN x""", transversalState)
+    val result7: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'OR'}]->(:SemiGlobalClaimNode{sentence:'Eはブロンドではない。'})-[:SemiGlobalEdge{logicType:'AND'}]->(:SemiGlobalClaimNode{sentence:'Fは黒髪ではない。'}) RETURN x""", transversalState)
     assert(result7.records.size == 1)
-    val result8: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'IMP'}]-(:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'}) RETURN x""", transversalState)
+    val result8: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalPremiseNode{sentence:'Bは黒髪ではない。'})-[:SemiGlobalEdge{logicType:'IMP'}]-(:SemiGlobalClaimNode{sentence:'Dは黒髪ではない。'}) RETURN x""", transversalState)
     assert(result8.records.size == 1)
 
 
@@ -196,7 +196,7 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("花子の趣味はガーデニングです。", "ja_JP", "{}", false, knowledgeForDocument=knowledgeForDocument, documentPageReference = documentPageReference2)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
-    val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (:GlobalNode{filename:'TEST.pdf'}) RETURN x""", transversalState)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:GlobalNode{filename:'TEST.pdf'}) RETURN x""", transversalState)
     assert(result.records.size == 1)
   }
 
