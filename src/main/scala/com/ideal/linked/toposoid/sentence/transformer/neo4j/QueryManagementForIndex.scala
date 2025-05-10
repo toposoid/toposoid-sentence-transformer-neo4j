@@ -16,7 +16,7 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.toposoid.common.TransversalState
+import com.ideal.linked.toposoid.common.{Neo4JUtils, TransversalState}
 import com.typesafe.scalalogging.LazyLogging
 
 object QueryManagementForIndex extends LazyLogging{

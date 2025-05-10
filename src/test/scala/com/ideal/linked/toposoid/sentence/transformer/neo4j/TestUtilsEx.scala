@@ -17,7 +17,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{Neo4JUtilsImpl, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
@@ -26,9 +26,10 @@ import play.api.libs.json.Json
 import scala.util.matching.Regex
 
 
-object TestUtils {
+object TestUtilsEx {
   val langPatternJP: Regex = "^ja_.*".r
   val langPatternEN: Regex = "^en_.*".r
+  val neo4JUtils = new Neo4JUtilsImpl()
 
   def deleteNeo4JAllData(transversalState:TransversalState): Unit = {
     val query = "MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r"
@@ -37,12 +38,9 @@ object TestUtils {
   }
 
   def executeQueryAndReturn(query:String, transversalState:TransversalState): Neo4jRecords = {
-    val convertQuery = ToposoidUtils.encodeJsonInJson(query)
-    val hoge = ToposoidUtils.decodeJsonInJson(convertQuery)
-    val json = s"""{ "query":"$convertQuery", "target": "" }"""
-    val jsonResult = ToposoidUtils.callComponent(json, conf.getString("TOPOSOID_GRAPHDB_WEB_HOST"), conf.getString("TOPOSOID_GRAPHDB_WEB_PORT"), "getQueryFormattedResult", transversalState)
-    Json.parse(jsonResult).as[Neo4jRecords]
+    neo4JUtils.executeQueryAndReturn(query:String, transversalState:TransversalState)
   }
+
 
   private def parse(knowledgeForParser: KnowledgeForParser, transversalState:TransversalState): AnalyzedPropositionPair = {
 
