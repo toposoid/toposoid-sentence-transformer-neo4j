@@ -29,8 +29,8 @@ import scala.util.matching.Regex
 object QueryManagementForSemiGlobalNode extends LazyLogging{
 
   val re = "UNION ALL\n$".r
-  val langPatternJP: Regex = "^ja_.*".r
-  val langPatternEN: Regex = "^en_.*".r
+  //val langPatternJP: Regex = "^ja_.*".r
+  //val langPatternEN: Regex = "^en_.*".r
 
   def executeForSemiGlobalNode(analyzedPropositionPair: AnalyzedPropositionPair, sentenceType:Int, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Unit = {
     val knowledgeForParser = analyzedPropositionPair.knowledgeForParser

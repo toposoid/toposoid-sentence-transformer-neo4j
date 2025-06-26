@@ -27,8 +27,8 @@ import scala.util.matching.Regex
 
 
 object TestUtilsEx {
-  val langPatternJP: Regex = "^ja_.*".r
-  val langPatternEN: Regex = "^en_.*".r
+  //val langPatternJP: Regex = "^ja_.*".r
+  //val langPatternEN: Regex = "^en_.*".r
   val neo4JUtils = new Neo4JUtilsImpl()
 
   def deleteNeo4JAllData(transversalState:TransversalState): Unit = {
@@ -47,13 +47,25 @@ object TestUtilsEx {
     //Analyze everything as simple sentences as Claims, not just sentenceType
     val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
     val json: String = Json.toJson(inputSentenceForParser).toString()
-    val parserInfo: (String, String) = knowledgeForParser.knowledge.lang match {
-      case langPatternJP() => (conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT"))
-      case langPatternEN() => (conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST"), conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT"))
+    val analyzedSentenceObjects: AnalyzedSentenceObjects = knowledgeForParser.knowledge.lang match {
+      case ToposoidUtils.langPatternJP() => {
+        val host = conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_HOST")
+        val port = conf.getString("TOPOSOID_SENTENCE_PARSER_JP_WEB_PORT")
+        val parseResult: String = ToposoidUtils.callComponent(json, host, port, "analyze", transversalState)
+        Json.parse(parseResult).as[AnalyzedSentenceObjects]
+      }
+      case ToposoidUtils.langPatternEN() => {
+        val host = conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_HOST")
+        val port = conf.getString("TOPOSOID_SENTENCE_PARSER_EN_WEB_PORT")
+        val parseResult: String = ToposoidUtils.callComponent(json, host, port, "analyze", transversalState)
+        Json.parse(parseResult).as[AnalyzedSentenceObjects]
+      }
+      case ToposoidUtils.langPatternSpecialSymbol1() => {
+        val aso = ToposoidUtils.parseSpecialSymbol(knowledgeForParser)
+        AnalyzedSentenceObjects(List(aso))
+      }
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
-    val parseResult: String = ToposoidUtils.callComponent(json, parserInfo._1, parserInfo._2, "analyze", transversalState)
-    val analyzedSentenceObjects: AnalyzedSentenceObjects = Json.parse(parseResult).as[AnalyzedSentenceObjects]
     AnalyzedPropositionPair(analyzedSentenceObjects = analyzedSentenceObjects, knowledgeForParser = knowledgeForParser)
   }
 

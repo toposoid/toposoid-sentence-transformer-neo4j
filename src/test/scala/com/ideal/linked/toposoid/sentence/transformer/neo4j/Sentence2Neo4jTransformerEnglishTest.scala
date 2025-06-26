@@ -160,7 +160,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
 
   }
 
-  "The List of Japanese Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
+  "The List of English Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
     val propositionId = UUID.random.toString
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
       List(KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),

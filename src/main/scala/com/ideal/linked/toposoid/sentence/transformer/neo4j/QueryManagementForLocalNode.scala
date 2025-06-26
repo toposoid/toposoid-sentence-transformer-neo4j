@@ -30,8 +30,8 @@ object QueryManagementForLocalNode  extends LazyLogging{
 
 
   val re = "UNION ALL\n$".r
-  val langPatternJP: Regex = "^ja_.*".r
-  val langPatternEN: Regex = "^en_.*".r
+  //val langPatternJP: Regex = "^ja_.*".r
+  //val langPatternEN: Regex = "^en_.*".r
 
   def execute(analyzedPropositionPair: AnalyzedPropositionPair, sentenceType:Int, neo4JUtils: Neo4JUtils, transversalState: TransversalState): Unit = {
 
@@ -105,8 +105,9 @@ object QueryManagementForLocalNode  extends LazyLogging{
     val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
 
     val nlpHostInfo: (String, String) = lang match {
-      case langPatternJP() => (conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_PORT"))
-      case langPatternEN() => (conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_PORT"))
+      case ToposoidUtils.langPatternJP() => (conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_JP_WEB_PORT"))
+      case ToposoidUtils.langPatternEN() => (conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_HOST"), conf.getString("TOPOSOID_COMMON_NLP_EN_WEB_PORT"))
+      case ToposoidUtils.langPatternSpecialSymbol1() => ("", "")
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
 
@@ -129,16 +130,20 @@ object QueryManagementForLocalNode  extends LazyLogging{
     }
 
     //create SynonymNode
-    val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms", transversalState)
-    val synonymList: SynonymList = Json.parse(result).as[SynonymList]
-    if (synonymList != null && synonymList.synonyms.size > 0) {
-      synonymList.synonyms.foldLeft(insertScript){
-        (acc, x) => {
-          acc.append(createQueryForSynonymNode(node, x, sentenceType))
+    if(nlpHostInfo == ("", "")){
+      insertScript
+    }else{
+      val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms", transversalState)
+      val synonymList: SynonymList = Json.parse(result).as[SynonymList]
+      if (synonymList != null && synonymList.synonyms.size > 0) {
+        synonymList.synonyms.foldLeft(insertScript) {
+          (acc, x) => {
+            acc.append(createQueryForSynonymNode(node, x, sentenceType))
+          }
         }
       }
+      else insertScript
     }
-    else insertScript
   }
 
   /**
