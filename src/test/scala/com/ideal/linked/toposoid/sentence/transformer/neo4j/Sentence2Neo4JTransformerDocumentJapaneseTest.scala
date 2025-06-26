@@ -62,7 +62,7 @@ class Sentence2Neo4JTransformerDocumentJapaneseTest extends AnyFlatSpec with Bef
     val knowledgeClaimList = List(
       KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_1", "ja_JP", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
       KnowledgeForParser(propositionId, sentenceId2, Knowledge("テスト文章2です。", "ja_JP", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReferenceClaim)),
-      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_3", "ja_JP", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
+      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_3", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])

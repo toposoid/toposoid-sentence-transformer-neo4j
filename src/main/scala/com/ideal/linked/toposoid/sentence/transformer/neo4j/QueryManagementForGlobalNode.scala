@@ -25,8 +25,8 @@ import scala.util.matching.Regex
 object QueryManagementForGlobalNode extends LazyLogging{
 
   val re = "UNION ALL\n$".r
-  val langPatternJP: Regex = "^ja_.*".r
-  val langPatternEN: Regex = "^en_.*".r
+  //val langPatternJP: Regex = "^ja_.*".r
+  //val langPatternEN: Regex = "^en_.*".r
 
   def existGlobalNode(documentId:String, neo4JUtils:Neo4JUtils, transversalState:TransversalState): Boolean ={
     val query = "MATCH x = (:GlobalNode{documentId:'%s'}) RETURN x".format(documentId)
