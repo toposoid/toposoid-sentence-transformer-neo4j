@@ -54,7 +54,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
     assert(result.records.size == 1)
     val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'Seeing'})-[:LocalEdge]->(:ClaimNode{surface:'believing'})<-[:LocalEdge]-(:ClaimNode{surface:'is'}) RETURN x""", transversalState)
     assert(result2.records.size == 1)
-    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MAtCH x = (:SynonymNode{nodeName:'living'})-[:SynonymEdge]->(:ClaimNode{surface:'life'}) return x""", transversalState)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MAtCH x = (:SynonymNode{nodeName:'lifespan'})-[:SynonymEdge]->(:ClaimNode{surface:'life'}) return x""", transversalState)
     assert(result3.records.size == 1)
     val result4: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:SemiGlobalClaimNode{sentence:"That's life."}) RETURN x""", transversalState)
     assert(result4.records.size == 1)
