@@ -27,17 +27,27 @@ object QueryManagementForIndex extends LazyLogging{
     neo4JUtils.executeQuery("CREATE CONSTRAINT premiseNodeIdIndex IF NOT EXISTS ON(n:PremiseNode) ASSERT n.nodeId IS UNIQUE", transversalState)
     neo4JUtils.executeQuery("CREATE CONSTRAINT claimNodeIdIndex IF NOT EXISTS ON(n:ClaimNode) ASSERT n.nodeId IS UNIQUE", transversalState)
     neo4JUtils.executeQuery("CREATE CONSTRAINT synonymNodeIdIndex IF NOT EXISTS ON(n:SynonymNode) ASSERT n.nodeId IS UNIQUE", transversalState)
-    neo4JUtils.executeQuery("CREATE CONSTRAINT imageNodeIdIndex IF NOT EXISTS ON(n:ImageNode) ASSERT n.featureId IS UNIQUE", transversalState)
+    neo4JUtils.executeQuery("CREATE CONSTRAINT semiGlobalPremiseIdIndex IF NOT EXISTS ON(n:SemiGlobalPremiseNode) ASSERT n.sentenceId IS UNIQUE", transversalState)
+    neo4JUtils.executeQuery("CREATE CONSTRAINT semiGlobalClaimIdIndex IF NOT EXISTS ON(n:SemiGlobalClaimNode) ASSERT n.sentenceId IS UNIQUE", transversalState)
+    neo4JUtils.executeQuery("CREATE CONSTRAINT documentNodeIdIndex IF NOT EXISTS ON(n:DocumentNode) ASSERT n.documentId IS UNIQUE", transversalState)
+
+    neo4JUtils.executeQuery("CREATE INDEX imageNodeIdIndex IF NOT EXISTS FOR (n:ImageNode) ON (n.featureId)", transversalState)
+    neo4JUtils.executeQuery("CREATE INDEX tableNodeIdIndex IF NOT EXISTS FOR (n:TableNode) ON (n.featureId)", transversalState)
 
     neo4JUtils.executeQuery("CREATE INDEX premisePropositionIdIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.propositionId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX claimPropositionIdIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.propositionId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX synonymPropositionIdIndex IF NOT EXISTS FOR (n:SynonymNode) ON (n.propositionId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX imagePropositionIdIndex IF NOT EXISTS FOR (n:ImageNode) ON (n.propositionId)", transversalState)
+    neo4JUtils.executeQuery("CREATE INDEX tablePropositionIdIndex IF NOT EXISTS FOR (n:TableNode) ON (n.propositionId)", transversalState)
+
+    neo4JUtils.executeQuery("CREATE INDEX semiGlobalPremisePropositionIdIndex IF NOT EXISTS FOR (n:SemiGlobalPremiseNode) ON (n.propositionId)", transversalState)
+    neo4JUtils.executeQuery("CREATE INDEX semiGlobalClaimPropositionIdIndex IF NOT EXISTS FOR (n:SemiGlobalClaimNode) ON (n.propositionId)", transversalState)
 
     neo4JUtils.executeQuery("CREATE INDEX premiseSentenceIdIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.sentenceId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX claimSentenceIdIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.sentenceId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX synonymSentenceIdIndex IF NOT EXISTS FOR (n:SynonymNode) ON (n.sentenceId)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX imageSentenceIdIndex IF NOT EXISTS FOR (n:ImageNode) ON (n.sentenceId)", transversalState)
+    neo4JUtils.executeQuery("CREATE INDEX tableSentenceIdIndex IF NOT EXISTS FOR (n:TableNode) ON (n.sentenceId)", transversalState)
 
     neo4JUtils.executeQuery("CREATE INDEX premiseSurfaceIndex IF NOT EXISTS FOR (n:PremiseNode) ON (n.surface)", transversalState)
     neo4JUtils.executeQuery("CREATE INDEX claimSurfaceIndex IF NOT EXISTS FOR (n:ClaimNode) ON (n.surface)", transversalState)
