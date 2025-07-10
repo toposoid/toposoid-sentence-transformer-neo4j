@@ -103,6 +103,7 @@ object QueryManagementForLocalNode  extends LazyLogging{
       convertList2Json(node.predicateArgumentStructure.morphemes),
       node.localContext.lang
     ))
+
     val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
 
     val nlpHostInfo: (String, String) = lang match {
@@ -129,9 +130,13 @@ object QueryManagementForLocalNode  extends LazyLogging{
         acc.append(createQueryForTableNode(node, sentenceType, x))
       }
     }
+    //Proper nouns (e.g., people's names, organization names, place names) will not be given synonyms.
+    val evalNouns = List("人名", "組織名", "地名", "PROPN").map(x => node.predicateArgumentStructure.morphemes.foldLeft(false)((acc,y) => acc || y.contains(x)))
 
     //create SynonymNode
-    if(nlpHostInfo == ("", "")){
+    if(nlpHostInfo == ("", "")) {
+      insertScript
+    }else if(evalNouns.filter(_ == true).size > 0){
       insertScript
     }else{
       val result: String = ToposoidUtils.callComponent(Json.toJson(normalizedWord).toString(), nlpHostInfo._1, nlpHostInfo._2, "getSynonyms", transversalState)
