@@ -16,6 +16,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "de.sciss" % "ws4j" % "0.1.0",
     libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
     libraryDependencies += "com.typesafe.play" %% "play-json" % "2.9.2",
+      libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.9" % Test,
     libraryDependencies += scalaTest % Test,
 
   )
