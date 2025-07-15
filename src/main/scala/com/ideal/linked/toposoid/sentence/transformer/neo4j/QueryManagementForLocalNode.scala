@@ -18,11 +18,11 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREDICATE_ARGUMENT, PREMISE, SYNONYM, TABLE, ToposoidUtils, TransversalState, Neo4JUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, Neo4JUtils, PREDICATE_ARGUMENT, PREMISE, SYNONYM, TABLE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson, escapeDoubleQuote}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
@@ -78,15 +78,15 @@ object QueryManagementForLocalNode  extends LazyLogging{
 
     insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', knowledgeFeatureReferences:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s'})\n".format(
       nodeType,
-      node.predicateArgumentStructure.normalizedName,
+      escapeDoubleQuote(node.predicateArgumentStructure.normalizedName),
       node.nodeId,
       node.propositionId,
       node.sentenceId,
       node.predicateArgumentStructure.currentId,
       node.predicateArgumentStructure.parentId,
       node.predicateArgumentStructure.isMainSection,
-      node.predicateArgumentStructure.surface,
-      node.predicateArgumentStructure.normalizedName,
+      escapeDoubleQuote(node.predicateArgumentStructure.surface),
+      escapeDoubleQuote(node.predicateArgumentStructure.normalizedName),
       node.predicateArgumentStructure.dependType,
       node.predicateArgumentStructure.caseType,
       node.localContext.namedEntity,

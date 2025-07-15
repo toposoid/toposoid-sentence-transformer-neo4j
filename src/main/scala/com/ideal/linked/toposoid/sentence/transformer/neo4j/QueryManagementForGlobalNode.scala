@@ -18,8 +18,10 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common._
-import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForDocument,PropositionRelation}
+import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForDocument, PropositionRelation}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.escapeDoubleQuote
 import com.typesafe.scalalogging.LazyLogging
+
 import scala.util.matching.Regex
 
 
@@ -57,7 +59,7 @@ object QueryManagementForGlobalNode extends LazyLogging{
       documentId,
       filename,
       url,
-      titleOfTopPage
+      escapeDoubleQuote(titleOfTopPage)
     ))
 
     if (insertScript.size != 0) neo4JUtils.executeQuery(re.replaceAllIn(insertScript.toString().stripMargin, ""), transversalState)
