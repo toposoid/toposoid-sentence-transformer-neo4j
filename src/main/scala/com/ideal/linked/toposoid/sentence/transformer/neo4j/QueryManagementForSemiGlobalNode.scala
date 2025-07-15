@@ -17,10 +17,10 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, PREMISE, SEMIGLOBAL, SENTENCE, TABLE, ToposoidUtils, TransversalState, Neo4JUtils}
+import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, Neo4JUtils, PREMISE, SEMIGLOBAL, SENTENCE, TABLE, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2JsonForKnowledgeFeatureReference, escapeDoubleQuote}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.Option
@@ -64,7 +64,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
       sentenceId,
       propositionId,
       documentId,
-      sentence,
+      escapeDoubleQuote(sentence),
       knowledgeFeatureReference,
       lang
     ))
