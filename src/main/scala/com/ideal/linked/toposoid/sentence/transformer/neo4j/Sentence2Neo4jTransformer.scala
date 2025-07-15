@@ -85,26 +85,26 @@ object Sentence2Neo4jTransformer extends LazyLogging{
    */
   def createGraph(analyzedPropositionSet:AnalyzedPropositionSet, transversalState: TransversalState, neo4JUtilsObject :Neo4JUtils=null): Unit = {
 
-      val neo4JUtils = Option(neo4JUtilsObject) match {
-        case Some(x) => x
-        case None => this.neo4JUtils
-      }
+    val neo4JUtils = Option(neo4JUtilsObject) match {
+      case Some(x) => x
+      case None => this.neo4JUtils
+    }
 
-      val insertScript = new StringBuilder
-      analyzedPropositionSet.premiseList.map(execute(_, PREMISE.index, neo4JUtils, transversalState))
-      analyzedPropositionSet.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
-      analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
-      analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
+    val insertScript = new StringBuilder
+    analyzedPropositionSet.premiseList.map(execute(_, PREMISE.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
 
-      if(analyzedPropositionSet.claimList.size > 0) {
-        val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
-        executeForGlobalNode(knowledgeForDocumentRep, neo4JUtils, transversalState)
-      }
+    if(analyzedPropositionSet.claimList.size > 0) {
+      val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
+      executeForGlobalNode(knowledgeForDocumentRep, neo4JUtils, transversalState)
+    }
 
-      //Get a list of sentenceIds for Premise and Claim respectively
-      //val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
-      //val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
-
+    //Get a list of sentenceIds for Premise and Claim respectively
+    val premiseSentenceIds = analyzedPropositionSet.premiseList.map(_.knowledgeForParser.sentenceId)
+    val claimSentenceIds = analyzedPropositionSet.claimList.map(_.knowledgeForParser.sentenceId)
+    /*
     val noReferenceRegex:Regex = "^(NO_REFERENCE)_.+_[0-9]+$".r
     val premiseSentences = analyzedPropositionSet.premiseList.filter(x => x.analyzedSentenceObjects.analyzedSentenceObjects.filter(y => y.nodeMap.filter(z => {
       val pas = z._2.predicateArgumentStructure
@@ -114,6 +114,7 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       !noReferenceRegex.matches(pas.surface) && (pas.caseType.equals("文末") || pas.caseType.equals("ROOT"))}).size > 0).size > 0)
     val premiseSentenceIds = premiseSentences.map(_.knowledgeForParser.sentenceId)
     val claimSentenceIds = claimSentences.map(_.knowledgeForParser.sentenceId)
+    */
 
     insertScript.clear()
       //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
