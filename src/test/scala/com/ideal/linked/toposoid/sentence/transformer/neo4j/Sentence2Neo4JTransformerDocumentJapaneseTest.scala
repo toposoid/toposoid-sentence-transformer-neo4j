@@ -56,20 +56,36 @@ class Sentence2Neo4JTransformerDocumentJapaneseTest extends AnyFlatSpec with Bef
 
     val knowledgeForDocument: KnowledgeForDocument = KnowledgeForDocument(id = documentId, filename = "test.pdf", url = "http://xxxx/test.pdf", titleOfTopPage = "テストタイトル")
 
+    val knowledgeClaimHavingTOCList = List(
+      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_1", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
+    )
     val knowledgePremiseList = List(
       KnowledgeForParser(propositionId, sentenceId1, Knowledge("テスト文章1です。", "ja_JP", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReferencePremise)),
     )
-
     val knowledgeClaimList = List(
-      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_1", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
       KnowledgeForParser(propositionId, sentenceId2, Knowledge("テスト文章2です。", "ja_JP", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReferenceClaim)),
-      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_3", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
+    )
+    val knowledgeClaimHavingReferenceList = List(
+      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_2", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
     )
 
-    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
+    val knowledgeSentenceSetForParser1 = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeClaimHavingTOCList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser1, transversalState), transversalState)
+    val knowledgeSentenceSetForParser2 = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser2, transversalState), transversalState)
+    val knowledgeSentenceSetForParser3 = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeClaimHavingReferenceList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser3, transversalState), transversalState)
 
-    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:GlobalNode {titleOfTopPage: 'テストタイトル', filename: 'test.pdf', url:'http://xxxx/test.pdf'}) RETURN x""", transversalState)
-    assert(result.records.size == 1)
+    val result1: Neo4jRecords = TestUtilsEx.executeQueryAndReturn(s"""MATCH x = (:SemiGlobalClaimNode{sentence:'NO_REFFERENCE_${documentId}_1'}) RETURN x""", transversalState)
+    assert(result1.records.size == 1)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:GlobalNode {titleOfTopPage: 'テストタイトル', filename: 'test.pdf', url:'http://xxxx/test.pdf'}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
+    val result3: Neo4jRecords = TestUtilsEx.executeQueryAndReturn(s"""MATCH x = (:SemiGlobalClaimNode{sentence:'NO_REFFERENCE_${documentId}_2'}) RETURN x""", transversalState)
+    assert(result3.records.size == 1)
+
+
   }
+
+
+
 }
