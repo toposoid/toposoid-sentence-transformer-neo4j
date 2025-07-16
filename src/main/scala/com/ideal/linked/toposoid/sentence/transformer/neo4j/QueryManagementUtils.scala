@@ -54,11 +54,11 @@ object QueryManagementUtils  extends LazyLogging {
   }
 
   def escapeSingleQuote(s:String) :String = {
-    s.replaceAll("'", "\\\\\'")
+    s.replaceAll("'", "＇")
   }
 
   def escapeDoubleQuote(s: String): String = {
-    s.replaceAll("\"", "\\\\\"")
+    s.replaceAll("\"", "＂")
   }
 
 }

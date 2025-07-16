@@ -201,5 +201,18 @@ class Sentence2Neo4jTransformerJapaneseTest extends AnyFlatSpec  with BeforeAndA
     assert(result.records.size == 1)
   }
 
+  "The list of japanese sentences with encoding1" should "be properly registered in the knowledge database and searchable." in {
+    val knowledgeList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("\"", "ja_JP", "{}", false)),
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("'", "ja_JP", "{}", false)))
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'＂'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:"＇"}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
+
+  }
+
 }
 
