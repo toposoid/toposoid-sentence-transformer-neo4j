@@ -16,6 +16,7 @@
  */
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
+import com.ideal.linked.toposoid.common.ToposoidUtils.escapeSingleQuote
 import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.{JsValue, Json}
@@ -53,12 +54,6 @@ object QueryManagementUtils  extends LazyLogging {
     escapeSingleQuote(Json.stringify(json))
   }
 
-  def escapeSingleQuote(s:String) :String = {
-    s.replaceAll("'", "＇")
-  }
 
-  def escapeDoubleQuote(s: String): String = {
-    s.replaceAll("\"", "＂")
-  }
 
 }

@@ -17,9 +17,9 @@
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
+import com.ideal.linked.toposoid.common.ToposoidUtils.escapeDoubleQuote
 import com.ideal.linked.toposoid.common._
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForDocument, PropositionRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.escapeDoubleQuote
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.matching.Regex
