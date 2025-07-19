@@ -1,7 +1,7 @@
 version: '3'
 services:
   toposoid-sentence-transformer-neo4j:
-    image: toposoid-sentence-transformer-neo4j:0.6-SNAPSHOT
+    image: toposoid-sentence-transformer-neo4j:0.6
     tty: true
     environment:
       - TOPOSOID_GRAPHDB_HOST=neo4j
@@ -16,14 +16,14 @@ services:
       - TOPOSOID_COMMON_NLP_EN_WEB_HOST=toposoid-common-nlp-english-web
       - TOPOSOID_COMMON_NLP_EN_WEB_PORT=9008
   toposoid-sentence-parser-japanese-web:
-    image: toposoid/toposoid-sentence-parser-japanese-web:0.6-SNAPSHOT
+    image: toposoid/toposoid-sentence-parser-japanese-web:0.6
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-sentence-parser-japanese-web
       - PLAY_HTTP_PORT=9001
     ports:
       - 9001:9001
   toposoid-common-nlp-japanese-web:
-    image: toposoid/toposoid-common-nlp-japanese-web:0.6-SNAPSHOT-lowspec
+    image: toposoid/toposoid-common-nlp-japanese-web:0.6-lowspec-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-common-nlp-japanese-web
       - TOPOSOID_SYNONYM_NOUN_SIMILARITY_THRESHHOLD_JP=0.52
@@ -36,7 +36,7 @@ services:
     ports:
       - 9006:9006
   toposoid-sentence-parser-english-web:
-    image: toposoid/toposoid-sentence-parser-english-web:0.6-SNAPSHOT-lowspec
+    image: toposoid/toposoid-sentence-parser-english-web:0.6-lowspec-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-sentence-parser-english-web
       - PLAY_HTTP_PORT=9007
@@ -45,7 +45,7 @@ services:
     ports:
       - 9007:9007
   toposoid-common-nlp-english-web:
-    image: toposoid/toposoid-common-nlp-english-web:0.6-SNAPSHOT-lowspec
+    image: toposoid/toposoid-common-nlp-english-web:0.6-lowspec-lowspec
     environment:
       - PRIVATE_IP_ADDRESS=toposoid-common-nlp-english-web
       - TOPOSOID_SYNONYM_NOUN_SIMILARITY_THRESHHOLD_EN=0.52
@@ -79,7 +79,7 @@ services:
       - NEO4J_dbms_default__database=neo4j
       - NEO4J_AUTH=neo4j/p@ssw0rd
   data-accessor-neo4j-web:
-    image: toposoid/data-accessor-neo4j-web:0.6-SNAPSHOT
+    image: toposoid/data-accessor-neo4j-web:0.6
     environment:
       - PRIVATE_IP_ADDRESS=data-accessor-neo4j-web
       - TOPOSOID_GRAPHDB_HOST=neo4j
