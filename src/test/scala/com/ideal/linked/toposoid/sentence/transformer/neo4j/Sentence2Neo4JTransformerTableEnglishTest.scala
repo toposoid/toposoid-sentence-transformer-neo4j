@@ -1,0 +1,164 @@
+/*
+ * Copyright (C) 2025  Linked Ideal LLC.[https://linked-ideal.com/]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.ideal.linked.toposoid.sentence.transformer.neo4j
+
+import com.ideal.linked.toposoid.common.TransversalState
+import com.ideal.linked.toposoid.knowledgebase.regist.model._
+import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
+import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
+import io.jvm.uuid.UUID
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+
+class Sentence2Neo4JTransformerTableEnglishTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll {
+
+  val transversalState:TransversalState = TransversalState(userId="test-user", username="guest", roleId=0, csrfToken = "")
+
+  before {
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
+  }
+
+  override def beforeAll(): Unit = {
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
+  }
+
+  override def afterAll(): Unit = {
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
+  }
+  
+  "The list of local claim tables" should "be properly registered in the knowledge database and searchable." in {
+    val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
+    val referenceTable1 = TableReference(reference = reference1)
+    val featureId1 = UUID.random.toString
+    val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
+
+    val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
+    val referenceTable2 = TableReference(reference = reference2)
+    val featureId2 = UUID.random.toString
+    val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
+
+
+    val knowledgeList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+    )
+
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState),transversalState)
+
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/yyy.tsv'})-[:TableEdge]->(:ClaimNode{surface:'Figure1'}) RETURN x """, transversalState)
+     assert(result.records.size == 1)
+
+    val result2:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/zzz.tsv'})-[:TableEdge]->(:ClaimNode{surface:'Figure2'}) RETURN x """, transversalState)
+    assert(result2 .records.size == 1)
+  }
+
+  "The list of local premise and claim images" should "be properly registered in the knowledge database and searchable." in {
+    val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
+    val referenceTable1 = TableReference(reference = reference1)
+    val featureId1 = UUID.random.toString
+    val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
+
+    val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
+    val referenceTable2 = TableReference(reference = reference2)
+    val featureId2 = UUID.random.toString
+    val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
+
+
+    val knowledgePremiseList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+    )
+
+    val knowledgeClaimList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+    )
+
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState),transversalState)
+
+    val result:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/yyy.tsv'})-[:TableEdge]->(:PremiseNode{surface:'Figure1'}) RETURN x """, transversalState)
+     assert(result.records.size == 1)
+
+    val result2:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/zzz.tsv'})-[:TableEdge]->(:ClaimNode{surface:'Figure2'}) RETURN x """, transversalState)
+    assert(result2 .records.size == 1)
+
+  }
+
+  "The list of semi-global claim images" should "be properly registered in the knowledge database and searchable." in {
+
+    val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
+    val referenceTable1 = TableReference(reference = reference1)
+    val featureId1 = UUID.random.toString
+    val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
+
+    val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
+    val referenceTable2 = TableReference(reference = reference2)
+    val featureId2 = UUID.random.toString
+    val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
+
+
+    val knowledgeList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+    )
+
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
+
+    val result:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/yyy.tsv'})-[:TableEdge]->(:SemiGlobalClaimNode{sentence:'This is a Figure1.'}) RETURN x """, transversalState)
+     assert(result.records.size == 1)
+
+    val result2:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/zzz.tsv'})-[:TableEdge]->(:SemiGlobalClaimNode{sentence:'This is a Figure2.'}) RETURN x """, transversalState)
+    assert(result2 .records.size == 1)
+
+  }
+
+  "The list of semi-global premise and claim images" should "be properly registered in the knowledge database and searchable." in {
+
+    val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
+    val referenceTable1 = TableReference(reference = reference1)
+    val featureId1 = UUID.random.toString
+    val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
+
+    val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
+    val referenceTable2 = TableReference(reference = reference2)
+    val featureId2 = UUID.random.toString
+    val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
+
+
+    val knowledgePremiseList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+    )
+
+    val knowledgeClaimList = List(
+      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+    )
+    val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
+
+
+    val result:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/yyy.tsv'})-[:TableEdge]->(:SemiGlobalPremiseNode{sentence:'This is a Figure1.'}) RETURN x """, transversalState)
+     assert(result.records.size == 1)
+
+    val result2:  Neo4jRecords =  TestUtilsEx.executeQueryAndReturn("""MATCH x = (:TableNode{url:'http://xxx/zzz.tsv'})-[:TableEdge]->(:SemiGlobalClaimNode{sentence:'This is a Figure2.'}) RETURN x """, transversalState)
+    assert(result2 .records.size == 1)
+
+  }
+
+}

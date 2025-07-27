@@ -1,40 +1,45 @@
 /*
- * Copyright 2021 Linked Ideal LLC.[https://linked-ideal.com/]
+ * Copyright (C) 2025  Linked Ideal LLC.[https://linked-ideal.com/]
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
-import com.ideal.linked.data.accessor.neo4j.Neo4JAccessor
+import com.ideal.linked.toposoid.common.TransversalState
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{ImageReference, Knowledge, KnowledgeForImage, PropositionRelation, Reference}
+import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 import io.jvm.uuid.UUID
-import org.neo4j.driver.Result
 
 class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with BeforeAndAfter with BeforeAndAfterAll {
+
+  val transversalState:TransversalState = TransversalState(userId="test-user", username="guest", roleId=0, csrfToken = "")
+
   before {
-    Neo4JAccessor.delete()
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def beforeAll(): Unit = {
-    Neo4JAccessor.delete()
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   override def afterAll(): Unit = {
-    Neo4JAccessor.delete()
+    TestUtilsEx.deleteNeo4JAllData(transversalState)
   }
 
   "The list of local claim images" should "be properly registered in the knowledge database and searchable." in {
@@ -55,13 +60,13 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
-    val result:Result =Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'猫が'}) RETURN x")
-    assert(result.hasNext)
+    val result:Neo4jRecords =TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'猫が'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
 
-    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'犬が'}) RETURN x")
-    assert(result2.hasNext)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'犬が'}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
   }
 
   "The list of local premise and claim images" should "be properly registered in the knowledge database and searchable." in {
@@ -84,13 +89,13 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("犬が一匹います。", "ja_JP", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
-    val result: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:PremiseNode{surface:'猫が'}) RETURN x")
-    assert(result.hasNext)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:PremiseNode{surface:'猫が'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
 
-    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'犬が'}) RETURN x")
-    assert(result2.hasNext)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:ClaimNode{surface:'犬が'}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
 
   }
 
@@ -113,13 +118,13 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
-    val result: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'猫が２匹います。'}) RETURN x")
-    assert(result.hasNext)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'猫が２匹います。'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
 
-    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'犬が一匹います。'}) RETURN x")
-    assert(result2.hasNext)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'犬が一匹います。'}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
 
   }
 
@@ -144,14 +149,15 @@ class Sentence2Neo4JTransformerImageJapaneseTest extends AnyFlatSpec with Before
       KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("犬が一匹います。", "ja_JP", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
-    Sentence2Neo4jTransformer.createGraph(knowledgeSentenceSetForParser)
+    Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
 
 
-    val result: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalPremiseNode{sentence:'猫が２匹います。'}) RETURN x")
-    assert(result.hasNext)
+    val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/val2017/000000039769.jpg'})-[:ImageEdge]->(:SemiGlobalPremiseNode{sentence:'猫が２匹います。'}) RETURN x""", transversalState)
+    assert(result.records.size == 1)
 
-    val result2: Result = Neo4JAccessor.executeQueryAndReturn("MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'犬が一匹います。'}) RETURN x")
-    assert(result2.hasNext)
+    val result2: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ImageNode{url:'http://images.cocodataset.org/train2017/000000428746.jpg'})-[:ImageEdge]->(:SemiGlobalClaimNode{sentence:'犬が一匹います。'}) RETURN x""", transversalState)
+    assert(result2.records.size == 1)
 
   }
+ 
 }
