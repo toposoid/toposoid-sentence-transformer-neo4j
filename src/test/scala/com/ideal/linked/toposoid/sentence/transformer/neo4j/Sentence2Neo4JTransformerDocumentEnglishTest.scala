@@ -22,7 +22,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
@@ -45,10 +45,10 @@ class Sentence2Neo4JTransformerDocumentEnglishTest extends AnyFlatSpec with Befo
 
   "The list of global premise and claim in document" should "be properly registered in the knowledge database and searchable." in {
 
-    val documentId = UUID.random.toString
-    val propositionId = UUID.random.toString
-    val sentenceId1 = UUID.random.toString
-    val sentenceId2 = UUID.random.toString
+    val documentId = java.util.UUID.randomUUID().toString
+    val propositionId = java.util.UUID.randomUUID().toString
+    val sentenceId1 = java.util.UUID.randomUUID().toString
+    val sentenceId2 = java.util.UUID.randomUUID().toString
     val documentPageReference1: DocumentPageReference = DocumentPageReference(pageNo = 1, references = List.empty[String], tableOfContents = List("TOC1", "TOC2"), headlines = List.empty[String])
     val documentPageReferencePremise: DocumentPageReference = DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String], headlines = List("TestPremiseHeadline1", "TestPremiseHeadline2"))
     val documentPageReferenceClaim: DocumentPageReference = DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String], headlines = List("TestClaimHeadline", "TestClaimHeadline2"))
@@ -57,7 +57,7 @@ class Sentence2Neo4JTransformerDocumentEnglishTest extends AnyFlatSpec with Befo
     val knowledgeForDocument: KnowledgeForDocument = KnowledgeForDocument(id = documentId, filename = "test.pdf", url = "http://xxxx/test.pdf", titleOfTopPage = "Test-Title")
 
     val knowledgeClaimHavingTOCList = List(
-      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_1", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
+      KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_1", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
     )
     val knowledgePremiseList = List(
       KnowledgeForParser(propositionId, sentenceId1, Knowledge("This is a Test Sentence1.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReferencePremise)),
@@ -66,7 +66,7 @@ class Sentence2Neo4JTransformerDocumentEnglishTest extends AnyFlatSpec with Befo
       KnowledgeForParser(propositionId, sentenceId2, Knowledge("This is a Test Sentence2.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReferenceClaim)),
     )
     val knowledgeClaimHavingReferenceList = List(
-      KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_2", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
+      KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("NO_REFFERENCE_" + documentId.toString + "_2", "@@_#1", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference3)),
     )
 
     val knowledgeSentenceSetForParser1 = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeClaimHavingTOCList, List.empty[PropositionRelation])
