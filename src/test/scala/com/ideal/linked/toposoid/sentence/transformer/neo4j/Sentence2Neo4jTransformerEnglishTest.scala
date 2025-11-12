@@ -25,7 +25,7 @@ import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, Know
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 import play.api.libs.json.Json
 
 
@@ -47,7 +47,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The list of english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", "{}", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US" ,"{}", false)))
+    val knowledgeList = List(KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("That's life.", "en_US", "{}", false)), KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("Seeing is believing.", "en_US" ,"{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode{surface:'That'})-[:LocalEdge]->(:ClaimNode{surface:"\\'s"})<-[:LocalEdge]-(:ClaimNode{surface:'life'}) RETURN x""", transversalState)
@@ -66,7 +66,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The list of multiple english sentences" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life. Seeing is believing.", "en_US", "{}", false)))
+    val knowledgeList = List(KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("That's life. Seeing is believing.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     
@@ -79,7 +79,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
   
   "The List of english sentences including a premise" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("If you can dream it, you can do it.", "en_US", "{}", false)))
+    val knowledgeList = List(KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("If you can dream it, you can do it.", "en_US", "{}", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     val result:Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:ClaimNode)-[*..]->(:ClaimNode{surface:'dream'})-[:LocalEdge]->(:ClaimNode{surface:'do'})<-[*..]-(:ClaimNode) RETURN x""",  transversalState)
@@ -90,7 +90,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The list of english sentences with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}""", false)))
+    val knowledgeList = List(KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("That's life.", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("Seeing is believing.", "en_US", """{"dummy":"!\"#$%&\'()"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     //val result: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x""",  transversalState)
@@ -103,7 +103,7 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The short english sentence with json" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeList = List(KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("nature", "en_US","""{"id":"Test2"}""", false)), KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("", "en_US","""{"id":"Test3"}""", false)))
+    val knowledgeList = List(KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("nature", "en_US", """{"id":"Test"}""", false)), KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("nature", "en_US","""{"id":"Test2"}""", false)), KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("", "en_US","""{"id":"Test3"}""", false)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List(PropositionRelation("AND", 0,1)))
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     //val neo4jRecords1: Neo4jRecords = TestUtils.executeQueryAndReturn("""MATCH x = (n:ClaimNode) WHERE n.extentText='{\"id\":\"Test\"}' return x""",  transversalState)
@@ -125,11 +125,11 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The List of English Premises and empty Claims" should "be properly registered in the knowledge database and searchable." in {
-    val propositionId = UUID.random.toString
+    val propositionId = java.util.UUID.randomUUID().toString
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
-      List(KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
+      List(KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
       List.empty[KnowledgeForParser], List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
@@ -143,12 +143,12 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The List of English Claims and empty Premises" should "be properly registered in the knowledge database and searchable." in {
-    val propositionId = UUID.random.toString
+    val propositionId = java.util.UUID.randomUUID().toString
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
       List.empty[KnowledgeForParser], List.empty[PropositionRelation],
-      List(KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
+      List(KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
@@ -162,15 +162,15 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The List of English Claims and Premises" should "be properly registered in the knowledge database and searchable." in {
-    val propositionId = UUID.random.toString
+    val propositionId = java.util.UUID.randomUUID().toString
     val knowledgeSetForParser: KnowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(
-      List(KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
+      List(KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("A's hair is not black.", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("B's hair is not blonde", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("C's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("AND", 0, 1), PropositionRelation("OR", 1, 2)),
-      List(KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("D's hair is not black.", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("E's hair is not blonde", "en_US", "{}", false)),
-        KnowledgeForParser(propositionId, UUID.random.toString, Knowledge("F's hair is not black.", "en_US", "{}", false))),
+      List(KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("D's hair is not black.", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("E's hair is not blonde", "en_US", "{}", false)),
+        KnowledgeForParser(propositionId, java.util.UUID.randomUUID().toString, Knowledge("F's hair is not black.", "en_US", "{}", false))),
       List(PropositionRelation("OR", 0, 1), PropositionRelation("AND", 1, 2))
     )
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSetForParser, transversalState), transversalState)
@@ -194,12 +194,12 @@ class Sentence2Neo4jTransformerEnglishTest extends AnyFlatSpec with BeforeAndAft
   }
 
   "The list of English sentences with documentId" should "be properly registered in the knowledge database and searchable." in {
-    val knowledgeForDocument = KnowledgeForDocument(id = UUID.random.toString, filename = "TEST.pdf", url = "http://hoge/TEST.pdf", titleOfTopPage = "TextTitle")
+    val knowledgeForDocument = KnowledgeForDocument(id = java.util.UUID.randomUUID().toString, filename = "TEST.pdf", url = "http://hoge/TEST.pdf", titleOfTopPage = "TextTitle")
     val documentPageReference1 = DocumentPageReference(pageNo = 1, references = List.empty[String], tableOfContents = List.empty[String], headlines = List.empty[String])
     val documentPageReference2 = DocumentPageReference(pageNo = 2, references = List.empty[String], tableOfContents = List.empty[String], headlines = List.empty[String])
     val knowledgeList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("That's life.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("Seeing is believing.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("That's life.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference1)),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("Seeing is believing.", "en_US", "{}", false, knowledgeForDocument = knowledgeForDocument, documentPageReference = documentPageReference2)))
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
     val result: Neo4jRecords = TestUtilsEx.executeQueryAndReturn("""MATCH x = (:GlobalNode{filename:'TEST.pdf'}) RETURN x""", transversalState)

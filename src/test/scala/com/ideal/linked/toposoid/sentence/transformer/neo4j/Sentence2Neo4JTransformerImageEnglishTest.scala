@@ -22,7 +22,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
@@ -45,18 +45,18 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
   "The list of local claim images" should "be properly registered in the knowledge database and searchable." in {
     val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "cats", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, width = 128, height = 128)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
     val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "dog", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, width = 128, height = 128)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
 
 
     val knowledgeList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US" ,"{}", false, List(knowledgeForImage2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There is a dog.", "en_US" ,"{}", false, List(knowledgeForImage2)))
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
@@ -72,21 +72,21 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
   "The list of local premise and claim images" should "be properly registered in the knowledge database and searchable." in {
     val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "cats", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, width = 128, height = 128)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
     val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "dog", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, width = 128, height = 128)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
 
 
     val knowledgePremiseList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
     )
 
     val knowledgeClaimList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState),transversalState)
@@ -103,18 +103,18 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
 
     val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, width = 128, height = 128)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
     val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, width = 128, height = 128)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
 
 
     val knowledgeList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
@@ -132,21 +132,21 @@ class Sentence2Neo4JTransformerImageEnglishTest extends AnyFlatSpec with BeforeA
 
     val reference1 = Reference(url = "http://images.cocodataset.org/val2017/000000039769.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage1 = ImageReference(reference = reference1, x = 0, y = 0, width = 128, height = 128)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForImage1 = KnowledgeForImage(featureId1, referenceImage1)
 
     val reference2 = Reference(url = "http://images.cocodataset.org/train2017/000000428746.jpg", surface = "", surfaceIndex = 0, isWholeSentence = true, originalUrlOrReference = "")
     val referenceImage2 = ImageReference(reference = reference2, x = 0, y = 0, width = 128, height = 128)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForImage2 = KnowledgeForImage(featureId2, referenceImage2)
 
 
     val knowledgePremiseList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There are two cats.", "en_US", "{}", false, List(knowledgeForImage1))),
     )
 
     val knowledgeClaimList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("There is a dog.", "en_US", "{}", false, List(knowledgeForImage2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)

@@ -22,7 +22,7 @@ import com.ideal.linked.toposoid.knowledgebase.regist.model._
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{KnowledgeForParser, KnowledgeSentenceSetForParser}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.TestUtilsEx.getAnalyzedPropositionSet
-import io.jvm.uuid.UUID
+//import io.jvm.uuid.UUID
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
@@ -45,18 +45,18 @@ class Sentence2Neo4JTransformerTableEnglishTest extends AnyFlatSpec with BeforeA
   "The list of local claim tables" should "be properly registered in the knowledge database and searchable." in {
     val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceTable1 = TableReference(reference = reference1)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
 
     val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceTable2 = TableReference(reference = reference2)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
 
 
     val knowledgeList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
@@ -72,21 +72,21 @@ class Sentence2Neo4JTransformerTableEnglishTest extends AnyFlatSpec with BeforeA
   "The list of local premise and claim images" should "be properly registered in the knowledge database and searchable." in {
     val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceTable1 = TableReference(reference = reference1)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
 
     val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = false, originalUrlOrReference = "")
     val referenceTable2 = TableReference(reference = reference2)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
 
 
     val knowledgePremiseList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
     )
 
     val knowledgeClaimList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure2.", "en_US" ,"{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
@@ -104,18 +104,18 @@ class Sentence2Neo4JTransformerTableEnglishTest extends AnyFlatSpec with BeforeA
 
     val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
     val referenceTable1 = TableReference(reference = reference1)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
 
     val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
     val referenceTable2 = TableReference(reference = reference2)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
 
 
     val knowledgeList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
     )
 
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(List.empty[KnowledgeForParser], List.empty[PropositionRelation], knowledgeList, List.empty[PropositionRelation])
@@ -133,21 +133,21 @@ class Sentence2Neo4JTransformerTableEnglishTest extends AnyFlatSpec with BeforeA
 
     val reference1 = Reference(url = "http://xxx/yyy.tsv", surface = "Figure1", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
     val referenceTable1 = TableReference(reference = reference1)
-    val featureId1 = UUID.random.toString
+    val featureId1 = java.util.UUID.randomUUID().toString
     val knowledgeForTable1 = KnowledgeForTable(featureId1, referenceTable1)
 
     val reference2 = Reference(url = "http://xxx/zzz.tsv", surface = "Figure2", surfaceIndex = 3, isWholeSentence = true, originalUrlOrReference = "")
     val referenceTable2 = TableReference(reference = reference2)
-    val featureId2 = UUID.random.toString
+    val featureId2 = java.util.UUID.randomUUID().toString
     val knowledgeForTable2 = KnowledgeForTable(featureId2, referenceTable2)
 
 
     val knowledgePremiseList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure1.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable1))),
     )
 
     val knowledgeClaimList = List(
-      KnowledgeForParser(UUID.random.toString, UUID.random.toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
+      KnowledgeForParser(java.util.UUID.randomUUID().toString, java.util.UUID.randomUUID().toString, Knowledge("This is a Figure2.", "en_US", "{}", false, List.empty[KnowledgeForImage], List(knowledgeForTable2)))
     )
     val knowledgeSentenceSetForParser = KnowledgeSentenceSetForParser(knowledgePremiseList, List.empty[PropositionRelation], knowledgeClaimList, List.empty[PropositionRelation])
     Sentence2Neo4jTransformer.createGraph(getAnalyzedPropositionSet(knowledgeSentenceSetForParser, transversalState), transversalState)
