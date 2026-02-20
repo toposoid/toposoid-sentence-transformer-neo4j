@@ -18,7 +18,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common.ToposoidUtils.escapeDoubleQuote
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, Neo4JUtils, PREMISE, SEMIGLOBAL, SENTENCE, TABLE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{SentenceType, ScopeType, FeatureType, Neo4JUtils, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
 import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
@@ -58,7 +58,7 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     val semiGlobalNodeId = sentenceId
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
     //val knowledgeFeatureNode = KnowledgeFeatureNode(semiGlobalNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
     insertScript.append("|MERGE (:%s {sentenceId:'%s', propositionId:'%s', documentId:'%s', sentence:\"%s\", knowledgeFeatureReferences:'%s', lang:'%s'})\n".format(
       nodeType,
@@ -93,8 +93,8 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
   }
 
   private def createQueryForImageNode(propositionId:String, sentenceId:String, sentenceType: Int, knowledgeForImage: KnowledgeForImage): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
-    val imageNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, IMAGE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+    val imageNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.IMAGE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, propositionId, sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
@@ -104,8 +104,8 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
   }
 
   private def createQueryForTableNode(propositionId: String, sentenceId: String, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, SEMIGLOBAL.index, SENTENCE.index)
-    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, TABLE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.TABLE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
@@ -127,12 +127,12 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     val insertScript = new StringBuilder
 
     val sourceNodeType: String = sentenceType match {
-      case -1 => ToposoidUtils.getNodeType(PREMISE.index, SEMIGLOBAL.index, SENTENCE.index)
-      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
+      case -1 => ToposoidUtils.getNodeType(SentenceType.PREMISE.index, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     }
     val destinationNodeType: String = sentenceType match {
-      case -1 => ToposoidUtils.getNodeType(CLAIM.index, SEMIGLOBAL.index, SENTENCE.index)
-      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
+      case -1 => ToposoidUtils.getNodeType(SentenceType.CLAIM.index, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     }
     insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.sentenceId =~'%s.*' AND  d.sentenceId =~'%s.*') MERGE (s)-[:SemiGlobalEdge {logicType:'%s'}]->(d) \n").format(
       sourceNodeType,
