@@ -18,7 +18,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.toposoid.common.ToposoidUtils.escapeDoubleQuote
-import com.ideal.linked.toposoid.common._
+import com.ideal.linked.toposoid.common.{SentenceType, ScopeType, FeatureType, Neo4JUtils, TransversalState, ToposoidUtils}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForDocument, PropositionRelation}
 import com.typesafe.scalalogging.LazyLogging
 
@@ -72,12 +72,12 @@ object QueryManagementForGlobalNode extends LazyLogging{
     val insertScript = new StringBuilder
 
     val sourceNodeType: String = sentenceType match {
-      case -1 => ToposoidUtils.getNodeType(PREMISE.index, SEMIGLOBAL.index, SENTENCE.index)
-      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
+      case -1 => ToposoidUtils.getNodeType(SentenceType.PREMISE.index, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     }
     val destinationNodeType: String = sentenceType match {
-      case -1 => ToposoidUtils.getNodeType(CLAIM.index, SEMIGLOBAL.index, SENTENCE.index)
-      case x => ToposoidUtils.getNodeType(x, SEMIGLOBAL.index, SENTENCE.index)
+      case -1 => ToposoidUtils.getNodeType(SentenceType.CLAIM.index,  ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
+      case x => ToposoidUtils.getNodeType(x,  ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     }
     insertScript.append(("|MATCH (s:%s), (d:%s) WHERE (s.semiGlobalNodeId =~'%s.*' AND  d.semiGlobalNodeId =~'%s.*') MERGE (s)-[:SemiGlobalEdge {logicType:'%s'}]->(d) \n").format(
       sourceNodeType,

@@ -19,7 +19,7 @@ package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
 import com.ideal.linked.toposoid.common.ToposoidUtils.escapeDoubleQuote
-import com.ideal.linked.toposoid.common.{CLAIM, IMAGE, LOCAL, Neo4JUtils, PREDICATE_ARGUMENT, PREMISE, SYNONYM, TABLE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{SentenceType, FeatureType, ScopeType, Neo4JUtils, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
@@ -73,11 +73,11 @@ object QueryManagementForLocalNode  extends LazyLogging{
    */
   private def createQueryForNode(node: KnowledgeBaseNode, sentenceType: Int, lang: String, knowledgeForImages:List[KnowledgeForImage], knowledgeForTables: List[KnowledgeForTable], transversalState:TransversalState): StringBuilder = {
 
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
     val insertScript= new StringBuilder
     //val testList = List(KnowledgeFeatureReference("id1", 0, "", "", 0, """{"test": "hoge"}"""), KnowledgeFeatureReference("id2", 0, "", "", 0, """{"test2": "fuga"}"""))
 
-    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntity:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', knowledgeFeatureReferences:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s'})\n".format(
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntities:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', knowledgeFeatureReferences:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', caseGroupType:'%s', casePhraseId:'%s', casePhrase:'%s', properNouns:'%s'})\n".format(
       nodeType,
       escapeDoubleQuote(node.predicateArgumentStructure.normalizedName),
       node.nodeId,
@@ -90,7 +90,7 @@ object QueryManagementForLocalNode  extends LazyLogging{
       escapeDoubleQuote(node.predicateArgumentStructure.normalizedName),
       node.predicateArgumentStructure.dependType,
       node.predicateArgumentStructure.caseType,
-      node.localContext.namedEntity,
+      convertMap2Json(node.localContext.namedEntities),
       convertNestedMapToJson(node.localContext.rangeExpressions),
       convertMap2Json(node.localContext.categories),
       convertMap2Json(node.localContext.domains),
@@ -102,7 +102,11 @@ object QueryManagementForLocalNode  extends LazyLogging{
       node.predicateArgumentStructure.modalityType,
       node.predicateArgumentStructure.parallelType,
       convertList2Json(node.predicateArgumentStructure.morphemes),
-      node.localContext.lang
+      node.localContext.lang,
+      node.predicateArgumentStructure.caseGroupType,
+      node.predicateArgumentStructure.casePhraseId,
+      node.predicateArgumentStructure.casePhrase,
+      convertMap2Json(node.localContext.properNouns)
     ))
 
     val normalizedWord = NormalizedWord(node.predicateArgumentStructure.normalizedName)
@@ -161,8 +165,8 @@ object QueryManagementForLocalNode  extends LazyLogging{
    * @param sentenceType
    */
   private def createQueryForSynonymNode(node: KnowledgeBaseNode, synonym: String, sentenceType: Int): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
-    val synonymNodeType:String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, SYNONYM.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
+    val synonymNodeType:String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.SYNONYM.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {nodeId:'%s', nodeName:'%s', propositionId:'%s', sentenceId:'%s'})\n".format(synonymNodeType, synonym + "_" + node.nodeId, synonym, node.propositionId, node.sentenceId))
     insertScript.append("|UNION ALL\n")
@@ -179,8 +183,8 @@ object QueryManagementForLocalNode  extends LazyLogging{
    * @return
    */
   private def createQueryForImageNode(node: KnowledgeBaseNode, sentenceType: Int, knowledgeForImage:KnowledgeForImage): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
-    val imageNodeType:String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, IMAGE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
+    val imageNodeType:String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.IMAGE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference, convertList2Json(knowledgeForImage.imageReference.reference.metaInformations)))
     insertScript.append("|UNION ALL\n")
@@ -190,8 +194,8 @@ object QueryManagementForLocalNode  extends LazyLogging{
   }
 
   private def createQueryForTableNode(node: KnowledgeBaseNode, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
-    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, PREDICATE_ARGUMENT.index)
-    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, LOCAL.index, TABLE.index)
+    val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
+    val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.TABLE.index)
     val insertScript = new StringBuilder
     insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, node.propositionId, node.sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference, convertList2Json(knowledgeForTable.tableReference.reference.metaInformations)))
     insertScript.append("|UNION ALL\n")
@@ -211,8 +215,8 @@ object QueryManagementForLocalNode  extends LazyLogging{
   private def createQueryForEdge(edge: KnowledgeBaseEdge, lang: String, sentenceType: Int): StringBuilder = {
     val insertScript = new StringBuilder
     val nodeType: String = sentenceType match {
-      case PREMISE.index => "PremiseNode"
-      case CLAIM.index => "ClaimNode"
+      case SentenceType.PREMISE.index => "PremiseNode"
+      case SentenceType.CLAIM.index => "ClaimNode"
     }
     /*
     val edgeType: String = sentenceType match {
@@ -262,13 +266,13 @@ object QueryManagementForLocalNode  extends LazyLogging{
   def createLogicRelation(sentenceIds: List[String], propositionRelation: PropositionRelation, sentenceType: Int): StringBuilder = {
     val insertScript = new StringBuilder
     val sourceNodeType: String = sentenceType match {
-      case PREMISE.index => "PremiseNode"
-      case CLAIM.index => "ClaimNode"
+      case SentenceType.PREMISE.index => "PremiseNode"
+      case SentenceType.CLAIM.index => "ClaimNode"
       case _ => "PremiseNode"
     }
     val destinationNodeType: String = sentenceType match {
-      case PREMISE.index => "PremiseNode"
-      case CLAIM.index => "ClaimNode"
+      case SentenceType.PREMISE.index => "PremiseNode"
+      case SentenceType.CLAIM.index => "ClaimNode"
       case _ => "ClaimNode"
     }
 

@@ -18,7 +18,7 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{CLAIM, Neo4JUtils, Neo4JUtilsImpl, PREMISE, ToposoidUtils, TransversalState}
+import com.ideal.linked.toposoid.common.{SentenceType, Neo4JUtils, Neo4JUtilsImpl, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.PropositionRelation
 import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
@@ -91,10 +91,10 @@ object Sentence2Neo4jTransformer extends LazyLogging{
     }
 
     val insertScript = new StringBuilder
-    analyzedPropositionSet.premiseList.map(execute(_, PREMISE.index, neo4JUtils, transversalState))
-    analyzedPropositionSet.claimList.map(execute(_, CLAIM.index, neo4JUtils, transversalState))
-    analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, PREMISE.index, neo4JUtils, transversalState))
-    analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, CLAIM.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.premiseList.map(execute(_, SentenceType.PREMISE.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.claimList.map(execute(_, SentenceType.CLAIM.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.premiseList.map(executeForSemiGlobalNode(_, SentenceType.PREMISE.index, neo4JUtils, transversalState))
+    analyzedPropositionSet.claimList.map(executeForSemiGlobalNode(_, SentenceType.CLAIM.index, neo4JUtils, transversalState))
 
     if(analyzedPropositionSet.claimList.size > 0) {
       val knowledgeForDocumentRep = analyzedPropositionSet.claimList.head.knowledgeForParser.knowledge.knowledgeForDocument
@@ -120,14 +120,14 @@ object Sentence2Neo4jTransformer extends LazyLogging{
       //If the target proposition has multiple Premises, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
       //if(premisePropositionIds.size > 1) executeForLogicRelation(premisePropositionIds, knowledgeSentenceSetForParser.premiseLogicRelation, PREMISE.index)
       if (premiseSentenceIds.size > 1) {
-        insertScript.append(executeForLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, PREMISE.index))
-        insertScript.append(executeForSemiGlobalLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, PREMISE.index))
+        insertScript.append(executeForLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, SentenceType.PREMISE.index))
+        insertScript.append(executeForSemiGlobalLogicRelation(premiseSentenceIds, analyzedPropositionSet.premiseLogicRelation, SentenceType.PREMISE.index))
       }
 
       //If the target proposition has multiple Claims, create an Edge on them according to knowledgeSentenceSet.premiseLogicRelation
       if (claimSentenceIds.size > 1) {
-        insertScript.append(executeForLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, CLAIM.index))
-        insertScript.append(executeForSemiGlobalLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, CLAIM.index))
+        insertScript.append(executeForLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, SentenceType.CLAIM.index))
+        insertScript.append(executeForSemiGlobalLogicRelation(claimSentenceIds, analyzedPropositionSet.claimLogicRelation, SentenceType.CLAIM.index))
       }
 
       //If the target proposition has both Premise and CLaim,
