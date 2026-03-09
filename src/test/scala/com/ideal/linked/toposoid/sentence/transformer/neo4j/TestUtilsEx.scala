@@ -18,8 +18,8 @@
 package com.ideal.linked.toposoid.sentence.transformer.neo4j
 
 import com.ideal.linked.common.DeploymentConverter.conf
-import com.ideal.linked.toposoid.common.{Neo4JUtilsImpl, ToposoidUtils, TransversalState}
-import com.ideal.linked.toposoid.protocol.model.base.AnalyzedSentenceObjects
+import com.ideal.linked.toposoid.common.{Neo4JUtilsImpl, ToposoidUtils, TransversalState, ActionModeType}
+import com.ideal.linked.toposoid.protocol.model.base.{AnalyzedSentenceObjects, DeductionConfiguration}
 import com.ideal.linked.toposoid.protocol.model.neo4j.Neo4jRecords
 import com.ideal.linked.toposoid.protocol.model.parser.{InputSentenceForParser, KnowledgeForParser, KnowledgeSentenceSetForParser}
 import play.api.libs.json.Json
@@ -46,7 +46,7 @@ object TestUtilsEx {
   private def parse(knowledgeForParser: KnowledgeForParser, transversalState:TransversalState): AnalyzedPropositionPair = {
 
     //Analyze everything as simple sentences as Claims, not just sentenceType
-    val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser))
+    val inputSentenceForParser = InputSentenceForParser(List.empty[KnowledgeForParser], List(knowledgeForParser), ActionModeType.REGISTRATION_MODE.index)
     val json: String = Json.toJson(inputSentenceForParser).toString()
     val analyzedSentenceObjects: AnalyzedSentenceObjects = knowledgeForParser.knowledge.lang match {
       case ToposoidUtils.langPatternJP() => {
@@ -63,7 +63,8 @@ object TestUtilsEx {
       }
       case ToposoidUtils.langPatternSpecialSymbol1() => {
         val aso = ToposoidUtils.parseSpecialSymbol(knowledgeForParser)
-        AnalyzedSentenceObjects(List(aso))
+        val deductionCofiguration = DeductionConfiguration(inputSentenceForParser.actionModeType, "", Map.empty[String,String]) 
+        AnalyzedSentenceObjects(List(aso), deductionCofiguration)
       }
       case _ => throw new Exception("It is an invalid locale or an unsupported locale.")
     }
