@@ -7,17 +7,18 @@ ThisBuild / organization     := "com.ideal.linked"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "toposoid-sentence-transformer-neo4j",
-    resolvers += Resolver.mavenLocal,
-    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT",
-    libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.7-SNAPSHOT",
-    libraryDependencies += "de.sciss" % "ws4j" % "0.1.0",
-    //libraryDependencies += "io.jvm.uuid" %% "scala-uuid" % "0.3.1",
-    //libraryDependencies += "org.playframework" %% "play-json" % "3.0.6",
-    libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.13" % Test,
-    libraryDependencies += scalaTest % Test,
+    name := "toposoid-sentence-transformer-neo4j",    
+    libraryDependencies += "com.ideal.linked" %% "scala-common" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "toposoid-knowledgebase-model" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "toposoid-deduction-protocol-model" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.ideal.linked" %% "toposoid-common" % "0.7-SNAPSHOT" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "de.sciss" % "ws4j" % "0.1.0" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "com.softwaremill.sttp.client4" %% "core" % "4.0.13" % Test exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += scalaTest % Test exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.apache.pekko" %% "pekko-slf4j" % "1.1.5" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.apache.pekko" %% "pekko-serialization-jackson" % "1.1.5" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.apache.pekko" %% "pekko-actor-typed" % "1.1.5" exclude("org.slf4j","slf4j-api"),
+    libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.36" ,
     parallelExecution in Test := false
   )
   .enablePlugins(AutomateHeaderPlugin)
