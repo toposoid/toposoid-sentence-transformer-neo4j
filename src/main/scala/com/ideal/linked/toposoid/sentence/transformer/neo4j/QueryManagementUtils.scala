@@ -49,11 +49,17 @@ object QueryManagementUtils  extends LazyLogging {
     escapeSingleQuote(Json.stringify(json))
   }
 
-  def convertList2JsonForKnowledgeFeatureReference(l: List[KnowledgeFeatureReference]): String = {
+  def convertIntList2Json(l: List[Int]): String = {
     val json: JsValue = Json.toJson(l)
     escapeSingleQuote(Json.stringify(json))
   }
 
+  /*
+  def convertList2JsonForKnowledgeFeatureReference(l: List[KnowledgeFeatureReference]): String = {
+    val json: JsValue = Json.toJson(l)
+    escapeSingleQuote(Json.stringify(json))
+  }
+  */
 
 
 }

@@ -23,7 +23,7 @@ import com.ideal.linked.toposoid.common.{SentenceType, FeatureType, ScopeType, N
 import com.ideal.linked.toposoid.knowledgebase.model.{KnowledgeBaseEdge, KnowledgeBaseNode}
 import com.ideal.linked.toposoid.knowledgebase.nlp.model.{NormalizedWord, SynonymList}
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertList2JsonForKnowledgeFeatureReference, convertMap2Json, convertNestedMapToJson}
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.{convertList2Json, convertMap2Json, convertIntList2Json, convertNestedMapToJson}
 import com.typesafe.scalalogging.LazyLogging
 import play.api.libs.json.Json
 
@@ -77,7 +77,7 @@ object QueryManagementForLocalNode  extends LazyLogging{
     val insertScript= new StringBuilder
     //val testList = List(KnowledgeFeatureReference("id1", 0, "", "", 0, """{"test": "hoge"}"""), KnowledgeFeatureReference("id2", 0, "", "", 0, """{"test2": "fuga"}"""))
 
-    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntities:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s', knowledgeFeatureReferences:'%s', isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', caseGroupType:'%s', casePhraseId:'%s', casePhrase:'%s', properNouns:'%s'})\n".format(
+    insertScript.append("|MERGE (:%s {nodeName: \"%s\", nodeId:'%s', propositionId:'%s', sentenceId:'%s', currentId:'%s', parentId:'%s', isMainSection:'%s', surface:\"%s\", normalizedName:\"%s\", dependType:'%s', caseType:'%s', namedEntities:'%s', rangeExpressions:'%s', categories:'%s', domains:'%s',  isDenialWord:'%s',isConditionalConnection:'%s',normalizedNameYomi:'%s',surfaceYomi:'%s',modalityType:'%s',logicType:'%s',morphemes:'%s',lang:'%s', caseGroupType:'%s', casePhraseId:'%s', casePhrase:'%s', properNouns:'%s'})\n".format(
       nodeType,
       escapeDoubleQuote(node.predicateArgumentStructure.normalizedName),
       node.nodeId,
@@ -94,7 +94,6 @@ object QueryManagementForLocalNode  extends LazyLogging{
       convertNestedMapToJson(node.localContext.rangeExpressions),
       convertMap2Json(node.localContext.categories),
       convertMap2Json(node.localContext.domains),
-      convertList2JsonForKnowledgeFeatureReference(node.localContext.knowledgeFeatureReferences),
       node.predicateArgumentStructure.isDenialWord,
       node.predicateArgumentStructure.isConditionalConnection,
       node.predicateArgumentStructure.normalizedNameYomi,
@@ -186,18 +185,19 @@ object QueryManagementForLocalNode  extends LazyLogging{
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
     val imageNodeType:String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.IMAGE.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference, convertList2Json(knowledgeForImage.imageReference.reference.metaInformations)))
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s', x:'%d', y:'%d', width:'%d', height:'%d'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, node.propositionId, node.sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference, convertList2Json(knowledgeForImage.imageReference.reference.metaInformations), knowledgeForImage.imageReference.x, knowledgeForImage.imageReference.y, knowledgeForImage.imageReference.width, knowledgeForImage.imageReference.height))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")
     insertScript
   }
 
+
   private def createQueryForTableNode(node: KnowledgeBaseNode, sentenceType: Int, knowledgeForTable: KnowledgeForTable): StringBuilder = {
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.PREDICATE_ARGUMENT.index)
     val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.TABLE.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, node.propositionId, node.sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference, convertList2Json(knowledgeForTable.tableReference.reference.metaInformations)))
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s', skipHeaderRows:'%d', skipRowList:'%s', multiHeaderRowsForExcel:'%d', sheetNameForExcel:\"%s\"})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, node.propositionId, node.sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference, convertList2Json(knowledgeForTable.tableReference.reference.metaInformations), knowledgeForTable.tableReference.skipHeaderRows, convertIntList2Json(knowledgeForTable.tableReference.skipRowList),  knowledgeForTable.tableReference.multiHeaderRowsForExcel ,escapeDoubleQuote(knowledgeForTable.tableReference.sheetNameForExcel)))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {nodeId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, node.nodeId))
     insertScript.append("|UNION ALL\n")

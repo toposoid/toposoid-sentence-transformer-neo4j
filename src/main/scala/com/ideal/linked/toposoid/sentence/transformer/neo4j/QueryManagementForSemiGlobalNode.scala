@@ -21,11 +21,12 @@ import com.ideal.linked.toposoid.common.ToposoidUtils.escapeDoubleQuote
 import com.ideal.linked.toposoid.common.{SentenceType, ScopeType, FeatureType, Neo4JUtils, ToposoidUtils, TransversalState}
 import com.ideal.linked.toposoid.knowledgebase.model.KnowledgeFeatureReference
 import com.ideal.linked.toposoid.knowledgebase.regist.model.{KnowledgeForImage, KnowledgeForTable, PropositionRelation}
-import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2JsonForKnowledgeFeatureReference
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.Option
 import scala.util.matching.Regex
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertList2Json
+import com.ideal.linked.toposoid.sentence.transformer.neo4j.QueryManagementUtils.convertIntList2Json
 
 
 object QueryManagementForSemiGlobalNode extends LazyLogging{
@@ -59,14 +60,13 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     //val localContextForFeature = LocalContextForFeature(lang, Map.empty[String, String])
     //val knowledgeFeatureNode = KnowledgeFeatureNode(semiGlobalNodeId, propositionId, sentenceId, sentence, sentenceType, localContextForFeature)
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
-    val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
-    insertScript.append("|MERGE (:%s {sentenceId:'%s', propositionId:'%s', documentId:'%s', sentence:\"%s\", knowledgeFeatureReferences:'%s', lang:'%s'})\n".format(
+    //val knowledgeFeatureReference: String = convertList2JsonForKnowledgeFeatureReference(List.empty[KnowledgeFeatureReference])
+    insertScript.append("|MERGE (:%s {sentenceId:'%s', propositionId:'%s', documentId:'%s', sentence:\"%s\",  lang:'%s'})\n".format(
       nodeType,
       sentenceId,
       propositionId,
       documentId,
       escapeDoubleQuote(sentence),
-      knowledgeFeatureReference,
       lang
     ))
 
@@ -96,7 +96,8 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     val imageNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.IMAGE.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, propositionId, sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference))
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s', x:'%d', y:'%d', width:'%d', height:'%d'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, propositionId, sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference, convertList2Json(knowledgeForImage.imageReference.reference.metaInformations), knowledgeForImage.imageReference.x, knowledgeForImage.imageReference.y, knowledgeForImage.imageReference.width, knowledgeForImage.imageReference.height))
+    //insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(imageNodeType, knowledgeForImage.id, knowledgeForImage.imageReference.reference.url, propositionId, sentenceId, knowledgeForImage.imageReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {sentenceId: '%s'}) MERGE (s)-[:ImageEdge]->(d)\n".format(imageNodeType, knowledgeForImage.id, nodeType, sentenceId))
     insertScript.append("|UNION ALL\n")
@@ -107,7 +108,8 @@ object QueryManagementForSemiGlobalNode extends LazyLogging{
     val nodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.SEMIGLOBAL.index, FeatureType.SENTENCE.index)
     val tableNodeType: String = ToposoidUtils.getNodeType(sentenceType, ScopeType.LOCAL.index, FeatureType.TABLE.index)
     val insertScript = new StringBuilder
-    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
+    insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s', metaInformation:'%s', skipHeaderRows:'%d', skipRowList:'%s', multiHeaderRowsForExcel:'%d', sheetNameForExcel:\"%s\"})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference, convertList2Json(knowledgeForTable.tableReference.reference.metaInformations), knowledgeForTable.tableReference.skipHeaderRows, convertIntList2Json(knowledgeForTable.tableReference.skipRowList),  knowledgeForTable.tableReference.multiHeaderRowsForExcel ,escapeDoubleQuote(knowledgeForTable.tableReference.sheetNameForExcel)))
+    //insertScript.append("|MERGE (:%s {featureId:'%s', url:'%s', propositionId:'%s', sentenceId:'%s', source:'%s'})\n".format(tableNodeType, knowledgeForTable.id, knowledgeForTable.tableReference.reference.url, propositionId, sentenceId, knowledgeForTable.tableReference.reference.originalUrlOrReference))
     insertScript.append("|UNION ALL\n")
     insertScript.append("|MATCH (s:%s {featureId: '%s'}), (d:%s {sentenceId: '%s'}) MERGE (s)-[:TableEdge]->(d)\n".format(tableNodeType, knowledgeForTable.id, nodeType, sentenceId))
     insertScript.append("|UNION ALL\n")
